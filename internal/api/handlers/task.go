@@ -2,7 +2,7 @@ package handlers
 
 import "net/http"
 
-type CreateTaskRequest struct {
+type TaskRequest struct {
 	Title       string `json:"title"`
 	Description string `json:"description"` 
 }
@@ -14,13 +14,34 @@ type CreateTaskRequest struct {
 // @ID create-task
 // @Accept  json
 // @Produce  json
-// @Param input body CreateTaskRequest true "task info"
+// @Param input body TaskRequest true "task info"
 // @Success 200
 // @Failure 400,404 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
 // @Router /api/v1/task [post]
 func CreateTask() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}
+
+
+// @Summary EditTask
+// @Security ApiKeyAuth
+// @Tags task
+// @Description edit task
+// @ID edit-task
+// @Accept  json
+// @Produce  json
+// @Param input body TaskRequest true "task info"
+// @Param id   path      string  true  "Task ID (UUID)"
+// @Success 200
+// @Failure 400,404 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /api/v1/task/{id} [put]
+func EditTask() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 	}
