@@ -1,7 +1,18 @@
 basePath: /
 definitions:
-  handlers.TaskBody:
+  handlers.Category:
     properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  handlers.TaskRequest:
+    properties:
+      category_ids:
+        items:
+          type: string
+        type: array
       description:
         type: string
       title:
@@ -9,6 +20,10 @@ definitions:
     type: object
   handlers.TaskResponse:
     properties:
+      categories:
+        items:
+          $ref: '#/definitions/handlers.Category'
+        type: array
       description:
         type: string
       id:
@@ -44,7 +59,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/handlers.TaskBody'
+          $ref: '#/definitions/handlers.TaskRequest'
       produces:
       - application/json
       responses:
@@ -72,6 +87,43 @@ paths:
       tags:
       - task
   /api/v1/task/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete task
+      operationId: delete-task
+      parameters:
+      - description: Task ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: DeleteTask
+      tags:
+      - task
     get:
       consumes:
       - application/json
@@ -111,6 +163,43 @@ paths:
       summary: GetTask
       tags:
       - task
+    post:
+      consumes:
+      - application/json
+      description: toggle readiness task
+      operationId: toggle-readiness-task
+      parameters:
+      - description: Task ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: ToggleReadinessTask
+      tags:
+      - task
     put:
       consumes:
       - application/json
@@ -122,7 +211,7 @@ paths:
         name: input
         required: true
         schema:
-          $ref: '#/definitions/handlers.TaskBody'
+          $ref: '#/definitions/handlers.TaskRequest'
       - description: Task ID (UUID)
         in: path
         name: id

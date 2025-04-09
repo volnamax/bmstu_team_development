@@ -8,17 +8,23 @@ import (
 
 type TaskBody struct {
 	Title       string `json:"title"`
-	Description string `json:"description"` 
+	Description string `json:"description"`
 }
 
 type TaskMeta struct {
-	Id uuid.UUID `json:"id"`
-	IsDone bool `json:"is_done"`
+	Id     uuid.UUID `json:"id"`
+	IsDone bool      `json:"is_done"`
+}
+
+type TaskRequest struct {
+	TaskBody
+	CategoryIds []string `json:"category_ids"`
 }
 
 type TaskResponse struct {
 	TaskMeta
 	TaskBody
+	Category []Category `json:"categories"`
 }
 
 // @Summary CreateTask
@@ -28,7 +34,7 @@ type TaskResponse struct {
 // @ID create-task
 // @Accept  json
 // @Produce  json
-// @Param input body TaskBody true "task info"
+// @Param input body TaskRequest true "task info"
 // @Success 200
 // @Failure 400,404 {object} response.Response
 // @Failure 500 {object} response.Response
@@ -40,7 +46,6 @@ func CreateTask() http.HandlerFunc {
 	}
 }
 
-
 // @Summary EditTask
 // @Security ApiKeyAuth
 // @Tags task
@@ -48,7 +53,7 @@ func CreateTask() http.HandlerFunc {
 // @ID edit-task
 // @Accept  json
 // @Produce  json
-// @Param input body TaskBody true "task info"
+// @Param input body TaskRequest true "task info"
 // @Param id   path      string  true  "Task ID (UUID)"
 // @Success 200
 // @Failure 400,404 {object} response.Response
@@ -60,7 +65,6 @@ func EditTask() http.HandlerFunc {
 
 	}
 }
-
 
 // @Summary GetTask
 // @Security ApiKeyAuth
@@ -81,7 +85,6 @@ func GetTask() http.HandlerFunc {
 	}
 }
 
-
 // @Summary ToggleReadinessTask
 // @Security ApiKeyAuth
 // @Tags task
@@ -96,6 +99,25 @@ func GetTask() http.HandlerFunc {
 // @Failure default {object} response.Response
 // @Router /api/v1/task/{id} [post]
 func ToggleReadinessTask() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}
+
+// @Summary DeleteTask
+// @Security ApiKeyAuth
+// @Tags task
+// @Description delete task
+// @ID delete-task
+// @Accept  json
+// @Produce  json
+// @Param id   path      string  true  "Task ID (UUID)"
+// @Success 200
+// @Failure 400,404 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /api/v1/task/{id} [delete]
+func DeleteTask() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 	}
