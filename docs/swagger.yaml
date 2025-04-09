@@ -24,6 +24,13 @@ definitions:
       name:
         type: string
     type: object
+  handlers.Pagination:
+    properties:
+      page_index:
+        type: integer
+      records_per_page:
+        type: integer
+    type: object
   handlers.TaskRequest:
     properties:
       category_ids:
@@ -49,6 +56,20 @@ definitions:
         type: boolean
       title:
         type: string
+    type: object
+  handlers.TasksList:
+    properties:
+      list:
+        items:
+          properties:
+            id:
+              type: string
+            is_done:
+              type: boolean
+            title:
+              type: string
+          type: object
+        type: array
     type: object
   handlers.Token:
     properties:
@@ -77,39 +98,6 @@ info:
   version: "1.0"
 paths:
   /api/v1/category:
-    get:
-      consumes:
-      - application/json
-      description: get all categories
-      operationId: get-categories
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.CategoriesResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Response'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: GetCategories
-      tags:
-      - category
     post:
       consumes:
       - application/json
@@ -184,6 +172,47 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: DeleteCategory
+      tags:
+      - category
+  /api/v1/category/all:
+    post:
+      consumes:
+      - application/json
+      description: get all categories
+      operationId: get-categories
+      parameters:
+      - description: pagination info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Pagination'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.CategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetCategories
       tags:
       - category
   /api/v1/sign-in:
@@ -458,6 +487,47 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: EditTask
+      tags:
+      - task
+  /api/v1/task/all:
+    post:
+      consumes:
+      - application/json
+      description: get all tasks
+      operationId: get-all-tasks
+      parameters:
+      - description: pagination info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Pagination'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TasksList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetAllTasks
       tags:
       - task
 securityDefinitions:

@@ -27,6 +27,13 @@ type TaskResponse struct {
 	CategoriesResponse
 }
 
+type TasksList struct {
+	List []struct {
+		TaskMeta
+		Title string `json:"title"`
+	} `json:"list"`
+}
+
 // @Summary CreateTask
 // @Security ApiKeyAuth
 // @Tags task
@@ -80,6 +87,25 @@ func EditTask() http.HandlerFunc {
 // @Failure default {object} response.Response
 // @Router /api/v1/task/{id} [get]
 func GetTask() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}
+
+// @Summary GetAllTasks
+// @Security ApiKeyAuth
+// @Tags task
+// @Description get all tasks
+// @ID get-all-tasks
+// @Accept  json
+// @Produce  json
+// @Param input body Pagination true "pagination info"
+// @Success 200 {object} TasksList
+// @Failure 400,404 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /api/v1/task/all [post]
+func GetAllTasks() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 	}

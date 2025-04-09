@@ -68,11 +68,12 @@ func DeleteCategory() http.HandlerFunc {
 // @ID get-categories
 // @Accept  json
 // @Produce  json
+// @Param input body Pagination true "pagination info"
 // @Success 200 {object} CategoriesResponse
 // @Failure 400,404 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
-// @Router /api/v1/category [get]
+// @Router /api/v1/category/all [post]
 func GetCategories() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
