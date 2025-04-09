@@ -35,7 +35,7 @@ type CategoriesResponse struct {
 // @Failure 400,404 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
-// @Router /api/v1/task [post]
+// @Router /api/v1/category [post]
 func CreateCategory() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 

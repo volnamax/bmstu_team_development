@@ -1,6 +1,23 @@
 basePath: /
 definitions:
-  handlers.Category:
+  handlers.CategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/handlers.CategoryResponse'
+        type: array
+    type: object
+  handlers.CategoryBody:
+    properties:
+      name:
+        type: string
+    type: object
+  handlers.CategoryId:
+    properties:
+      id:
+        type: string
+    type: object
+  handlers.CategoryResponse:
     properties:
       id:
         type: string
@@ -11,7 +28,7 @@ definitions:
     properties:
       category_ids:
         items:
-          type: string
+          $ref: '#/definitions/handlers.CategoryId'
         type: array
       description:
         type: string
@@ -22,7 +39,7 @@ definitions:
     properties:
       categories:
         items:
-          $ref: '#/definitions/handlers.Category'
+          $ref: '#/definitions/handlers.CategoryResponse'
         type: array
       description:
         type: string
@@ -31,6 +48,18 @@ definitions:
       is_done:
         type: boolean
       title:
+        type: string
+    type: object
+  handlers.Token:
+    properties:
+      token:
+        type: string
+    type: object
+  handlers.UserInfo:
+    properties:
+      name:
+        type: string
+      password:
         type: string
     type: object
   response.Response:
@@ -47,6 +76,194 @@ info:
   title: Plan&Do API
   version: "1.0"
 paths:
+  /api/v1/category:
+    get:
+      consumes:
+      - application/json
+      description: get all categories
+      operationId: get-categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.CategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetCategories
+      tags:
+      - category
+    post:
+      consumes:
+      - application/json
+      description: create category
+      operationId: create-category
+      parameters:
+      - description: category name
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CategoryBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: CreateCategory
+      tags:
+      - category
+  /api/v1/category/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete category
+      operationId: delete-category
+      parameters:
+      - description: Category ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: DeleteCategory
+      tags:
+      - category
+  /api/v1/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: SignIn
+      operationId: sign-in
+      parameters:
+      - description: user's name and password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Token'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: SignIn
+      tags:
+      - user
+  /api/v1/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: SignUp
+      operationId: sign-up
+      parameters:
+      - description: user's name and password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Token'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: SignUp
+      tags:
+      - user
   /api/v1/task:
     post:
       consumes:
