@@ -1,10 +1,24 @@
 package handlers
 
-import "net/http"
+import (
+	"net/http"
 
-type TaskRequest struct {
+	"github.com/google/uuid"
+)
+
+type TaskBody struct {
 	Title       string `json:"title"`
 	Description string `json:"description"` 
+}
+
+type TaskMeta struct {
+	Id uuid.UUID `json:"id"`
+	IsDone bool `json:"is_done"`
+}
+
+type TaskResponse struct {
+	TaskMeta
+	TaskBody
 }
 
 // @Summary CreateTask
@@ -14,7 +28,7 @@ type TaskRequest struct {
 // @ID create-task
 // @Accept  json
 // @Produce  json
-// @Param input body TaskRequest true "task info"
+// @Param input body TaskBody true "task info"
 // @Success 200
 // @Failure 400,404 {object} response.Response
 // @Failure 500 {object} response.Response
@@ -34,7 +48,7 @@ func CreateTask() http.HandlerFunc {
 // @ID edit-task
 // @Accept  json
 // @Produce  json
-// @Param input body TaskRequest true "task info"
+// @Param input body TaskBody true "task info"
 // @Param id   path      string  true  "Task ID (UUID)"
 // @Success 200
 // @Failure 400,404 {object} response.Response
@@ -42,6 +56,46 @@ func CreateTask() http.HandlerFunc {
 // @Failure default {object} response.Response
 // @Router /api/v1/task/{id} [put]
 func EditTask() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}
+
+
+// @Summary GetTask
+// @Security ApiKeyAuth
+// @Tags task
+// @Description get task
+// @ID get-task
+// @Accept  json
+// @Produce  json
+// @Param id   path      string  true  "Task ID (UUID)"
+// @Success 200 {object} TaskResponse
+// @Failure 400,404 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /api/v1/task/{id} [get]
+func GetTask() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+	}
+}
+
+
+// @Summary ToggleReadinessTask
+// @Security ApiKeyAuth
+// @Tags task
+// @Description toggle readiness task
+// @ID toggle-readiness-task
+// @Accept  json
+// @Produce  json
+// @Param id   path      string  true  "Task ID (UUID)"
+// @Success 200
+// @Failure 400,404 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /api/v1/task/{id} [post]
+func ToggleReadinessTask() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 	}
