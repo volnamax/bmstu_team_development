@@ -18,13 +18,13 @@ type TaskMeta struct {
 
 type TaskRequest struct {
 	TaskBody
-	CategoryIds []string `json:"category_ids"`
+	CategoryIds []CategoryId `json:"category_ids"`
 }
 
 type TaskResponse struct {
 	TaskMeta
 	TaskBody
-	Category []Category `json:"categories"`
+	CategoriesResponse
 }
 
 // @Summary CreateTask
