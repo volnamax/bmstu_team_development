@@ -7,6 +7,7 @@ import (
 	"todolist/internal/models"
 	"todolist/internal/pkg/response"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 )
@@ -57,7 +58,7 @@ type TaskProvider interface {
 // @Produce  json
 // @Param input body TaskRequest true "task info"
 // @Success 200
-// @Failure 400,404 {object} response.Response
+// @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
 // @Router /api/v1/task [post]
@@ -96,13 +97,41 @@ func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 // @Param input body TaskRequest true "task info"
 // @Param id   path      string  true  "Task ID (UUID)"
 // @Success 200
-// @Failure 400,404 {object} response.Response
+// @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
 // @Router /api/v1/task/{id} [put]
-func EditTask() http.HandlerFunc {
+func EditTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
 
+		uuid, err := uuid.Parse(id)
+		if err != nil {
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("invalid UUID"))
+			return
+		}
+
+		var req TaskRequest
+		err = render.DecodeJSON(r.Body, &req)
+		if err != nil {
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error(err.Error()))
+			return
+		}
+
+		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
+		err = taskProvider.Update(ctx, uuid, toModelTaskBody(req))
+		if err != nil {
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error(err.Error()))
+			return
+		}
+
+		render.Status(r, http.StatusOK)
 	}
 }
 
