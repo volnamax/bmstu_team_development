@@ -7,12 +7,16 @@ type TaskBody struct {
 	Description string
 }
 
-type TaskMeta struct {
-	Id     uuid.UUID
+type TaskShortInfo struct {
+	ID     uuid.UUID
 	IsDone bool
+	Title  string
 }
 
-type Task struct {
-	TaskMeta
-	TaskBody
+type TaskFullInfo struct {
+	ID          uuid.UUID
+	Title       string
+	Description string
+	IsDone      bool
+	Categories  []Category
 }

@@ -10,12 +10,8 @@ type CategoryBody struct {
 	Name string `json:"name"`
 }
 
-type CategoryId struct {
-	Id uuid.UUID `json:"id"`
-}
-
 type CategoryResponse struct {
-	CategoryId
+	ID uuid.UUID `json:"id"`
 	CategoryBody
 }
 
