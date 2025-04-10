@@ -222,13 +222,32 @@ func GetAllTasks(taskProvider TaskProvider, timeout time.Duration) http.HandlerF
 // @Produce  json
 // @Param id   path      string  true  "Task ID (UUID)"
 // @Success 200
-// @Failure 400,404 {object} response.Response
+// @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
 // @Router /api/v1/task/{id} [post]
-func ToggleReadinessTask() http.HandlerFunc {
+func ToggleReadinessTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		uuid, err := uuid.Parse(id)
+		if err != nil {
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("invalid UUID"))
+			return
+		}
 
+		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
+		err = taskProvider.ToggleDone(ctx, uuid)
+		if err != nil {
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error(err.Error()))
+			return
+		}
+
+		render.Status(r, http.StatusOK)
 	}
 }
 
@@ -245,9 +264,28 @@ func ToggleReadinessTask() http.HandlerFunc {
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
 // @Router /api/v1/task/{id} [delete]
-func DeleteTask() http.HandlerFunc {
+func DeleteTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		uuid, err := uuid.Parse(id)
+		if err != nil {
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("invalid UUID"))
+			return
+		}
 
+		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
+		err = taskProvider.Delete(ctx, uuid)
+		if err != nil {
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error(err.Error()))
+			return
+		}
+
+		render.Status(r, http.StatusOK)
 	}
 }
 
