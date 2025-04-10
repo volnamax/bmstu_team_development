@@ -1,0 +1,538 @@
+basePath: /
+definitions:
+  handlers.CategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/handlers.CategoryResponse'
+        type: array
+    type: object
+  handlers.CategoryBody:
+    properties:
+      name:
+        type: string
+    type: object
+  handlers.CategoryId:
+    properties:
+      id:
+        type: string
+    type: object
+  handlers.CategoryResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  handlers.Pagination:
+    properties:
+      page_index:
+        type: integer
+      records_per_page:
+        type: integer
+    type: object
+  handlers.TaskRequest:
+    properties:
+      category_ids:
+        items:
+          $ref: '#/definitions/handlers.CategoryId'
+        type: array
+      description:
+        type: string
+      title:
+        type: string
+    type: object
+  handlers.TaskResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/handlers.CategoryResponse'
+        type: array
+      description:
+        type: string
+      id:
+        type: string
+      is_done:
+        type: boolean
+      title:
+        type: string
+    type: object
+  handlers.TasksList:
+    properties:
+      list:
+        items:
+          properties:
+            id:
+              type: string
+            is_done:
+              type: boolean
+            title:
+              type: string
+          type: object
+        type: array
+    type: object
+  handlers.Token:
+    properties:
+      token:
+        type: string
+    type: object
+  handlers.UserInfo:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API Server for todo list
+  title: Plan&Do API
+  version: "1.0"
+paths:
+  /api/v1/category:
+    post:
+      consumes:
+      - application/json
+      description: create category
+      operationId: create-category
+      parameters:
+      - description: category name
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CategoryBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: CreateCategory
+      tags:
+      - category
+  /api/v1/category/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete category
+      operationId: delete-category
+      parameters:
+      - description: Category ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: DeleteCategory
+      tags:
+      - category
+  /api/v1/category/all:
+    post:
+      consumes:
+      - application/json
+      description: get all categories
+      operationId: get-categories
+      parameters:
+      - description: pagination info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Pagination'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.CategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetCategories
+      tags:
+      - category
+  /api/v1/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: SignIn
+      operationId: sign-in
+      parameters:
+      - description: user's name and password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Token'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: SignIn
+      tags:
+      - user
+  /api/v1/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: SignUp
+      operationId: sign-up
+      parameters:
+      - description: user's name and password
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UserInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.Token'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: SignUp
+      tags:
+      - user
+  /api/v1/task:
+    post:
+      consumes:
+      - application/json
+      description: create task
+      operationId: create-task
+      parameters:
+      - description: task info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.TaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: CreateTask
+      tags:
+      - task
+  /api/v1/task/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: delete task
+      operationId: delete-task
+      parameters:
+      - description: Task ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: DeleteTask
+      tags:
+      - task
+    get:
+      consumes:
+      - application/json
+      description: get task
+      operationId: get-task
+      parameters:
+      - description: Task ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TaskResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetTask
+      tags:
+      - task
+    post:
+      consumes:
+      - application/json
+      description: toggle readiness task
+      operationId: toggle-readiness-task
+      parameters:
+      - description: Task ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: ToggleReadinessTask
+      tags:
+      - task
+    put:
+      consumes:
+      - application/json
+      description: edit task
+      operationId: edit-task
+      parameters:
+      - description: task info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.TaskRequest'
+      - description: Task ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: EditTask
+      tags:
+      - task
+  /api/v1/task/all:
+    post:
+      consumes:
+      - application/json
+      description: get all tasks
+      operationId: get-all-tasks
+      parameters:
+      - description: pagination info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.Pagination'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.TasksList'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: GetAllTasks
+      tags:
+      - task
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
