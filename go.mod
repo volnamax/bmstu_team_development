@@ -3,12 +3,12 @@ module todolist
 go 1.23.8
 
 require (
-	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/caarlos0/env/v11 v11.3.1
+	github.com/go-chi/chi v1.5.5
 	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-chi/render v1.0.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
+	github.com/lib/pq v1.10.9
 	github.com/pkg/errors v0.9.1
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.4
