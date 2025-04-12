@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"todolist/internal/api/handlers"
 	auth_utils "todolist/internal/pkg/authUtils"
 	"todolist/internal/pkg/response"
 
@@ -24,11 +25,6 @@ type JwtAuthMiddleware struct {
 	secret       string
 	tokenHandler auth_utils.ITokenHandler
 }
-
-var (
-	UserIDContextKey = "contextKeyRole{}"
-	RoleContextKey   = "contextKeyID{}"
-)
 
 func (m *JwtAuthMiddleware) MiddlewareFunc(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +50,7 @@ func (m *JwtAuthMiddleware) MiddlewareFunc(next http.Handler) http.Handler {
 			}
 			return
 		}
-		ctx := context.WithValue(r.Context(), UserIDContextKey, payload.ID)
+		ctx := context.WithValue(r.Context(), handlers.UserIDContextKey, payload.ID)
 
 		m.logger.WithFields(
 			logrus.Fields{
