@@ -29,11 +29,11 @@ type Token struct {
 }
 
 type AuthProvider interface {
-	SignIn(candidate *models.UserAuth) (tokenStr string, err error)
-	SignUp(candidate *models.UserAuth) error
-	CheckTaskOwnership(userID uuid.UUID, taskID uuid.UUID) (bool, error)
-	CheckCategoriesOwnership(userID uuid.UUID, categories []uuid.UUID) (bool, error)
-	DeleteUser(userID uuid.UUID) error
+	SignIn(ctx context.Context, candidate *models.UserAuth) (tokenStr string, err error)
+	SignUp(ctx context.Context, candidate *models.UserAuth) error
+	CheckTaskOwnership(ctx context.Context, userID uuid.UUID, taskID uuid.UUID) (bool, error)
+	CheckCategoriesOwnership(ctx context.Context, userID uuid.UUID, categories []uuid.UUID) (bool, error)
+	DeleteUser(ctx context.Context, userID uuid.UUID) error
 }
 
 func FromUserInfo(userDTO UserInfo) *models.UserAuth {
@@ -68,7 +68,8 @@ func SignIn(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 		ctx := r.Context()
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
-		tokenStr, err := authProvider.SignIn(FromUserInfo(req))
+
+		tokenStr, err := authProvider.SignIn(ctx, FromUserInfo(req))
 		if err != nil {
 			if errors.Is(err, auth_utils.ErrInvalidToken) {
 				render.Status(r, http.StatusBadRequest)
@@ -103,7 +104,12 @@ func SignUp(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 			render.JSON(w, r, response.Error(err.Error()))
 			return
 		}
-		err = authProvider.SignUp(FromUserInfo(req))
+
+		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
+		err = authProvider.SignUp(ctx, FromUserInfo(req))
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
@@ -135,7 +141,12 @@ func DeleteUser(authProvider AuthProvider, timeout time.Duration) http.HandlerFu
 			render.Status(r, http.StatusBadRequest)
 			return
 		}
-		err = authProvider.DeleteUser(userUUID)
+
+		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
+		err = authProvider.DeleteUser(ctx, userUUID)
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
