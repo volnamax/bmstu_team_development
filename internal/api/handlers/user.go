@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"time"
+	"todolist/internal/middleware"
 	"todolist/internal/models"
 	auth_utils "todolist/internal/pkg/authUtils"
 	"todolist/internal/pkg/response"
@@ -27,6 +28,7 @@ type AuthProvider interface {
 	SignUp(candidate *models.UserAuth) error
 	CheckTaskOwnership(userID uuid.UUID, taskID uuid.UUID) (bool, error)
 	CheckCategoriesOwnership(userID uuid.UUID, categories []uuid.UUID) (bool, error)
+	DeleteUser(userID uuid.UUID) error
 }
 
 func FromUserInfo(userDTO UserInfo) *models.UserAuth {
@@ -103,5 +105,37 @@ func SignUp(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 			return
 		}
 		render.Status(r, http.StatusOK)
+	}
+}
+
+// @Summary DeleteUser
+// @Security ApiKeyAuth
+// @Tags user
+// @Description delete user
+// @ID delete-user
+// @Accept  json
+// @Produce  json
+// @Success 200
+// @Failure 400 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Failure default {object} response.Response
+// @Router /api/v1/user [delete]
+func DeleteUser(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userID := r.Context().Value(middleware.UserIDContextKey).(string)
+
+		userUUID, err := uuid.Parse(userID)
+		if err != nil {
+			render.JSON(w, r, response.Error("Invalud userID"))
+			render.Status(r, http.StatusBadRequest)
+			return
+		}
+		err = authProvider.DeleteUser(userUUID)
+		if err != nil {
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, response.Error(err.Error()))
+		}
+		render.Status(r, http.StatusOK)
+
 	}
 }

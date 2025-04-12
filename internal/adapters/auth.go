@@ -18,6 +18,7 @@ type IUserRepository interface {
 	CreateUser(user *models.UserAuth) error
 	CheckTaskOwnership(userID uuid.UUID, taskID uuid.UUID) (bool, error)
 	CheckCategoriesOwnership(userID uuid.UUID, categories []uuid.UUID) (bool, error)
+	DeleteUser(userID uuid.UUID) error
 }
 
 type UserAdapter struct {
@@ -122,4 +123,13 @@ func (serv *UserAdapter) CheckCategoriesOwnership(userID uuid.UUID, categories [
 		return false, errors.Wrap(err, "Error in checking task ownership")
 	}
 	return areCategoriesOwned, nil
+}
+
+func (serv *UserAdapter) DeleteUser(userID uuid.UUID) error {
+	err := serv.userRepo.DeleteUser(userID)
+	if err != nil {
+		err = errors.Wrapf(err, "Failed to delete user with id %v", userID)
+		serv.logger.Info(err)
+	}
+	return err
 }
