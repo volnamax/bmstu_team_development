@@ -43,10 +43,10 @@ type TasksList struct {
 }
 
 type TaskProvider interface {
-	CreateTask(ctx context.Context, body *models.TaskBody) error
+	CreateTask(ctx context.Context, userId uuid.UUID, body *models.TaskBody) error
 	Update(ctx context.Context, id uuid.UUID, body *models.TaskBody) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.TaskFullInfo, error)
-	GetAll(ctx context.Context, pageIndex, recordsPerPage int) ([]models.TaskShortInfo, error)
+	GetAll(ctx context.Context, userId uuid.UUID, pageIndex, recordsPerPage int) ([]models.TaskShortInfo, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	ToggleDone(ctx context.Context, id uuid.UUID) error
 }
@@ -60,7 +60,7 @@ type TaskProvider interface {
 // @Produce  json
 // @Param input body TaskRequest true "task info"
 // @Success 200
-// @Failure 400 {object} response.Response
+// @Failure 400,401 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
 // @Router /api/v1/task [post]
@@ -78,7 +78,14 @@ func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		err = taskProvider.CreateTask(ctx, toModelTaskBody(req))
+		userId, ok := r.Context().Value("userId").(uuid.UUID)
+		if !ok {
+			render.Status(r, http.StatusUnauthorized)
+			render.JSON(w, r, response.Error("unauthorized"))
+			return
+		}
+
+		err = taskProvider.CreateTask(ctx, userId, toModelTaskBody(req))
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
@@ -184,7 +191,7 @@ func GetTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc 
 // @Produce  json
 // @Param input body Pagination true "pagination info"
 // @Success 200 {object} TasksList
-// @Failure 400 {object} response.Response
+// @Failure 400,401 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
 // @Router /api/v1/task/all [post]
@@ -202,7 +209,14 @@ func GetAllTasks(taskProvider TaskProvider, timeout time.Duration) http.HandlerF
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		tasks, err := taskProvider.GetAll(ctx, req.PageIndex, req.RecordsPerPage)
+		userId, ok := r.Context().Value("userId").(uuid.UUID)
+		if !ok {
+			render.Status(r, http.StatusUnauthorized)
+			render.JSON(w, r, response.Error("unauthorized"))
+			return
+		}
+
+		tasks, err := taskProvider.GetAll(ctx, userId, req.PageIndex, req.RecordsPerPage)
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
