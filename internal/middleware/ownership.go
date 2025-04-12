@@ -26,7 +26,7 @@ func NewOwnershipMiddleware(service adapters.UserAdapter, logger *logrus.Logger)
 
 func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := r.Context().Value(UserIDContextKey).(string)
+		userID, ok := r.Context().Value(handlers.UserIDContextKey).(string)
 		if !ok {
 			m.logger.Warn("Missing/invalid userID")
 			render.Status(r, http.StatusUnauthorized)
@@ -75,7 +75,7 @@ func (m *OwnershipMiddleware) CheckTaskMiddleware(next http.Handler) http.Handle
 			return
 		}
 
-		userID, ok := r.Context().Value(UserIDContextKey).(string)
+		userID, ok := r.Context().Value(handlers.UserIDContextKey).(string)
 		if !ok {
 			m.logger.Warn("Missing/invalid userID")
 			render.Status(r, http.StatusUnauthorized)
