@@ -18,6 +18,7 @@ type Handlers struct {
 
 func NewHandlers(cfg *config.ServiceConfig, db *gorm.DB, router *chi.Mux) *Handlers {
 	return &Handlers{
+		cfg:    cfg,
 		db:     db,
 		router: router,
 	}
