@@ -43,8 +43,8 @@ type TasksList struct {
 }
 
 type TaskProvider interface {
-	CreateTask(ctx context.Context, userId uuid.UUID, body *models.TaskBody) error
-	Update(ctx context.Context, id uuid.UUID, body *models.TaskBody) error
+	CreateTask(ctx context.Context, userId uuid.UUID, body *models.TaskBody, categoryIDs []uuid.UUID) error
+	Update(ctx context.Context, id uuid.UUID, body *models.TaskBody, categoryIDs []uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.TaskFullInfo, error)
 	GetAll(ctx context.Context, userId uuid.UUID, pageIndex, recordsPerPage int) ([]models.TaskShortInfo, error)
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -85,7 +85,7 @@ func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 			return
 		}
 
-		err = taskProvider.CreateTask(ctx, userId, toModelTaskBody(req))
+		err = taskProvider.CreateTask(ctx, userId, toModelTaskBody(req), req.CategoryIds)
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
@@ -109,7 +109,7 @@ func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 // @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
-// @Router /api/v1/task/{id} [put]
+// @Router /api/v1/task/{id} [patch]
 func EditTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
@@ -133,7 +133,7 @@ func EditTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		err = taskProvider.Update(ctx, uuid, toModelTaskBody(req))
+		err = taskProvider.Update(ctx, uuid, toModelTaskBody(req), req.CategoryIds)
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
@@ -239,7 +239,7 @@ func GetAllTasks(taskProvider TaskProvider, timeout time.Duration) http.HandlerF
 // @Failure 400 {object} response.Response
 // @Failure 500 {object} response.Response
 // @Failure default {object} response.Response
-// @Router /api/v1/task/{id} [post]
+// @Router /api/v1/task/{id}/readiness [post]
 func ToggleReadinessTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")

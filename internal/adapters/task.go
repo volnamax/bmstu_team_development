@@ -10,8 +10,8 @@ import (
 )
 
 type TaskRepository interface {
-	CreateTask(ctx context.Context, userId uuid.UUID, body *models.TaskBody) error
-	Update(ctx context.Context, id uuid.UUID, body *models.TaskBody) error
+	CreateTask(ctx context.Context, userId uuid.UUID, body *models.TaskBody, categoryIDs []uuid.UUID) error
+	Update(ctx context.Context, id uuid.UUID, body *models.TaskBody, categoryIDs []uuid.UUID) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.TaskFullInfo, error)
 	GetAll(ctx context.Context, userId uuid.UUID, pageIndex, recordsPerPage int) ([]models.TaskShortInfo, error)
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -26,8 +26,8 @@ func NewTaskAdapter(repository TaskRepository) *TaskAdapter {
 	return &TaskAdapter{repository: repository}
 }
 
-func (t *TaskAdapter) CreateTask(ctx context.Context, userId uuid.UUID, body *models.TaskBody) error {
-	err := t.repository.CreateTask(ctx, userId, body)
+func (t *TaskAdapter) CreateTask(ctx context.Context, userId uuid.UUID, body *models.TaskBody, categoryIDs []uuid.UUID) error {
+	err := t.repository.CreateTask(ctx, userId, body, categoryIDs)
 	if err != nil {
 		return errors.Wrap(err, "failed to create task")
 	}
@@ -35,8 +35,8 @@ func (t *TaskAdapter) CreateTask(ctx context.Context, userId uuid.UUID, body *mo
 	return nil
 }
 
-func (t *TaskAdapter) Update(ctx context.Context, id uuid.UUID, body *models.TaskBody) error {
-	err := t.repository.Update(ctx, id, body)
+func (t *TaskAdapter) Update(ctx context.Context, id uuid.UUID, body *models.TaskBody, categoryIDs []uuid.UUID) error {
+	err := t.repository.Update(ctx, id, body, categoryIDs)
 	if err != nil {
 		return errors.Wrapf(err, "failed to update task with id: %s", id)
 	}
