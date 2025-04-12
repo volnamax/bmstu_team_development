@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"todolist/internal/adapters"
 	"todolist/internal/models"
 
@@ -41,93 +42,116 @@ func NewUserRepositoryAdapter(srcDB *gorm.DB) adapters.IUserRepository {
 	}
 }
 
-func (repo *UserRepositoryAdapter) GetUserByID(id uuid.UUID) (*models.User, error) {
+func (repo *UserRepositoryAdapter) GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	var userDA User
 	userDA.ID = id
-	tx := repo.db.First(&userDA)
 
-	if tx.Error == gorm.ErrRecordNotFound {
-		return nil, models.ErrUserNotFound
-	}
-
+	tx := repo.db.WithContext(ctx).First(&userDA)
 	if tx.Error != nil {
-		return nil, errors.Wrap(tx.Error, "Error getting user by ID")
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return nil, models.ErrUserNotFound
+		}
+		return nil, errors.Wrap(tx.Error, "error getting user by ID")
 	}
+
+	if err := ctx.Err(); err != nil {
+		return nil, errors.Wrap(err, "context error during user lookup")
+	}
+
 	user := FromDaUser(userDA)
 	return &user, nil
 }
 
-func (repo *UserRepositoryAdapter) GetUserByName(name string) (*models.User, error) {
+func (repo *UserRepositoryAdapter) GetUserByName(ctx context.Context, name string) (*models.User, error) {
 	var userDA User
-	tx := repo.db.Where("name = ?", name).First(&userDA)
 
-	if tx.Error == gorm.ErrRecordNotFound {
-		return nil, models.ErrUserNotFound
-	}
-
+	tx := repo.db.WithContext(ctx).Where("name = ?", name).First(&userDA)
 	if tx.Error != nil {
-		return nil, errors.Wrap(tx.Error, "Error getting user by ID")
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return nil, models.ErrUserNotFound
+		}
+		return nil, errors.Wrap(tx.Error, "error getting user by name")
 	}
+
+	if err := ctx.Err(); err != nil {
+		return nil, errors.Wrap(err, "context error during user lookup")
+	}
+
 	user := FromDaUser(userDA)
 	return &user, nil
 }
 
-func (repo *UserRepositoryAdapter) CreateUser(user *models.UserAuth) error {
+func (repo *UserRepositoryAdapter) CreateUser(ctx context.Context, user *models.UserAuth) error {
 	userDa := ToDaUser(*user)
-	tx := repo.db.Create(&userDa)
 
+	tx := repo.db.WithContext(ctx).Create(&userDa)
 	if tx.Error != nil {
-		return errors.Wrap(tx.Error, "error in creating user")
+		return errors.Wrap(tx.Error, "error creating user")
 	}
+
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context error during user creation")
+	}
+
 	return nil
 }
 
-func (repo *UserRepositoryAdapter) CheckTaskOwnership(userID uuid.UUID, taskID uuid.UUID) (bool, error) {
+func (repo *UserRepositoryAdapter) CheckTaskOwnership(ctx context.Context, userID, taskID uuid.UUID) (bool, error) {
 	var isOwned bool
 
-	err := repo.db.
-		Raw(
-			"SELECT EXISTS(SELECT 1 FROM task WHERE id = ? AND user_id = ?)",
-			taskID,
-			userID,
-		).
-		Scan(&isOwned).
-		Error
+	tx := repo.db.WithContext(ctx).
+		Raw("SELECT EXISTS(SELECT 1 FROM task WHERE id = ? AND user_id = ?)",
+			taskID, userID).
+		Scan(&isOwned)
 
-	if err != nil {
-		return false, errors.Wrap(err, "failed to verify task ownership")
+	if tx.Error != nil {
+		return false, errors.Wrap(tx.Error, "failed to verify task ownership")
+	}
+
+	if err := ctx.Err(); err != nil {
+		return false, errors.Wrap(err, "context error during ownership check")
 	}
 
 	return isOwned, nil
 }
 
-func (repo *UserRepositoryAdapter) CheckCategoriesOwnership(userID uuid.UUID, categories []uuid.UUID) (bool, error) {
+func (repo *UserRepositoryAdapter) CheckCategoriesOwnership(ctx context.Context, userID uuid.UUID, categories []uuid.UUID) (bool, error) {
 	if len(categories) == 0 {
 		return true, nil
 	}
 
 	var allOwned bool
-	err := repo.db.Raw(`
+
+	tx := repo.db.WithContext(ctx).Raw(`
         SELECT NOT EXISTS (
             SELECT 1 FROM categories 
             WHERE id IN (?) 
             AND user_id != ?
-        )`,
-		pq.Array(categories),
-		userID,
-	).Scan(&allOwned).Error
+        )`, pq.Array(categories), userID).Scan(&allOwned)
 
-	return allOwned, errors.Wrap(err, "failed raw ownership check")
-func (repo *UserRepositoryAdapter) DeleteUser(userID uuid.UUID) error {
+	if tx.Error != nil {
+		return false, errors.Wrap(tx.Error, "failed raw ownership check")
+	}
 
-	tx := repo.db.Delete(&User{}, "id = ?", userID)
+	if err := ctx.Err(); err != nil {
+		return false, errors.Wrap(err, "context error during categories check")
+	}
+
+	return allOwned, nil
+}
+
+func (repo *UserRepositoryAdapter) DeleteUser(ctx context.Context, userID uuid.UUID) error {
+	tx := repo.db.WithContext(ctx).Delete(&User{}, "id = ?", userID)
 	if tx.Error != nil {
 		return errors.Wrap(tx.Error, "error deleting user")
 	}
 
-	// Check if any row was actually deleted
 	if tx.RowsAffected == 0 {
 		return models.ErrUserNotFound
+	}
+
+	if err := ctx.Err(); err != nil {
+		return errors.Wrap(err, "context error during user deletion")
 	}
 
 	return nil

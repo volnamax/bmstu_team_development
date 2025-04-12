@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
+	"time"
 	"todolist/internal/adapters"
 	"todolist/internal/api/handlers"
 	"todolist/internal/pkg/response"
@@ -9,18 +11,16 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 type OwnershipMiddleware struct {
 	userService adapters.UserAdapter
-	logger      *logrus.Logger
+	timeout     time.Duration
 }
 
-func NewOwnershipMiddleware(service adapters.UserAdapter, logger *logrus.Logger) OwnershipMiddleware {
+func NewOwnershipMiddleware(service adapters.UserAdapter, timeout time.Duration) OwnershipMiddleware {
 	return OwnershipMiddleware{
 		userService: service,
-		logger:      logger,
 	}
 }
 
@@ -28,7 +28,7 @@ func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := r.Context().Value(handlers.UserIDContextKey).(string)
 		if !ok {
-			m.logger.Warn("Missing/invalid userID")
+			//m.logger.Warn("Missing/invalid userID")
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, response.Error("Missing userID"))
 			return
@@ -36,9 +36,9 @@ func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.
 
 		userUUID, err := uuid.Parse(userID)
 		if err != nil {
-			m.logger.WithError(err).
-				WithField("userID", userID).
-				Warn("Malformed userID UUID")
+			//m.logger.WithError(err).
+			//	WithField("userID", userID).
+			//	Warn("Malformed userID UUID")
 			render.JSON(w, r, response.Error("Invalud userID"))
 			render.Status(r, http.StatusBadRequest)
 			return
@@ -51,7 +51,12 @@ func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.
 			render.JSON(w, r, response.Error(err.Error()))
 			return
 		}
-		areCategoriesOwned, err := m.userService.CheckCategoriesOwnership(userUUID, req.CategoryIds)
+
+		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(ctx, m.timeout)
+		defer cancel()
+
+		areCategoriesOwned, err := m.userService.CheckCategoriesOwnership(ctx, userUUID, req.CategoryIds)
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
@@ -77,7 +82,7 @@ func (m *OwnershipMiddleware) CheckTaskMiddleware(next http.Handler) http.Handle
 
 		userID, ok := r.Context().Value(handlers.UserIDContextKey).(string)
 		if !ok {
-			m.logger.Warn("Missing/invalid userID")
+			//m.logger.Warn("Missing/invalid userID")
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, response.Error("Missing userID"))
 			return
@@ -85,15 +90,19 @@ func (m *OwnershipMiddleware) CheckTaskMiddleware(next http.Handler) http.Handle
 
 		userUUID, err := uuid.Parse(userID)
 		if err != nil {
-			m.logger.WithError(err).
-				WithField("userID", userID).
-				Warn("Malformed userID UUID")
+			//m.logger.WithError(err).
+			//	WithField("userID", userID).
+			//	Warn("Malformed userID UUID")
 			render.JSON(w, r, response.Error("Invalud userID"))
 			render.Status(r, http.StatusBadRequest)
 			return
 		}
 
-		isTaskOwned, err := m.userService.CheckTaskOwnership(userUUID, taskUUID)
+		ctx := r.Context()
+		ctx, cancel := context.WithTimeout(ctx, m.timeout)
+		defer cancel()
+
+		isTaskOwned, err := m.userService.CheckTaskOwnership(ctx, userUUID, taskUUID)
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
