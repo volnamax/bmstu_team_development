@@ -5,18 +5,13 @@ import (
 	"errors"
 	"net/http"
 	"time"
+	"todolist/internal/middleware"
 	"todolist/internal/models"
 	auth_utils "todolist/internal/pkg/authUtils"
 	"todolist/internal/pkg/response"
 
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
-)
-
-type contextKey string // unexported base type
-
-const (
-	UserIDContextKey contextKey = "userID"
 )
 
 type UserInfo struct {
@@ -133,7 +128,7 @@ func SignUp(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 // @Router /api/v1/user [delete]
 func DeleteUser(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Context().Value(UserIDContextKey).(string)
+		userID := r.Context().Value(middleware.UserIDContextKey).(string)
 
 		userUUID, err := uuid.Parse(userID)
 		if err != nil {

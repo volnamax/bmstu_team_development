@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"todolist/internal/adapters"
+
 	"todolist/internal/models"
 
 	"github.com/google/uuid"
@@ -13,15 +13,20 @@ type CategoryRepositoryAdapter struct {
 	db *gorm.DB
 }
 
-func NewCategoryRepositoryAdapter(srcDB *gorm.DB) adapters.CategoryRepository {
+func NewCategoryRepositoryAdapter(srcDB *gorm.DB) *CategoryRepositoryAdapter {
 	return &CategoryRepositoryAdapter{
 		db: srcDB,
 	}
 }
 
 type Category struct {
-	ID   uuid.UUID `gorm:"primaryKey;column:id;type:uuid;default:gen_random_uuid()"`
-	Name string    `gorm:"unique;column:name"`
+	ID     uuid.UUID `gorm:"column:id_category;type:uuid;default:gen_random_uuid();primaryKey"`
+	UserID uuid.UUID `gorm:"column:user_id;type:uuid;not null"`
+	Name   string    `gorm:"type:varchar(50);not null"`
+}
+
+func (Category) TableName() string {
+	return "category"
 }
 
 func (c *CategoryRepositoryAdapter) CreateCategory(ctx context.Context, body *models.CategoryBody) error {

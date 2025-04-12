@@ -2,7 +2,6 @@ package adapters
 
 import (
 	"context"
-	"todolist/internal/api/handlers"
 	"todolist/internal/models"
 
 	"github.com/google/uuid"
@@ -19,7 +18,7 @@ type CategoryAdapter struct {
 	repository CategoryRepository
 }
 
-func NewCategoryAdapter(repository CategoryRepository) handlers.CategoriesProvider {
+func NewCategoryAdapter(repository CategoryRepository) *CategoryAdapter {
 	return &CategoryAdapter{repository: repository}
 }
 

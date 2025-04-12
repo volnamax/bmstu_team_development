@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"todolist/internal/adapters"
 	"todolist/internal/models"
 
 	"github.com/google/uuid"
@@ -36,7 +35,7 @@ type UserRepositoryAdapter struct {
 	db *gorm.DB
 }
 
-func NewUserRepositoryAdapter(srcDB *gorm.DB) adapters.IUserRepository {
+func NewUserRepositoryAdapter(srcDB *gorm.DB) *UserRepositoryAdapter {
 	return &UserRepositoryAdapter{
 		db: srcDB,
 	}

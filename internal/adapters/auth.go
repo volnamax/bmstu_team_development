@@ -2,7 +2,6 @@ package adapters
 
 import (
 	"context"
-	"todolist/internal/api/handlers"
 	"todolist/internal/models"
 	auth_utils "todolist/internal/pkg/authUtils"
 
@@ -29,7 +28,7 @@ type UserAdapter struct {
 	tokenHandler auth_utils.ITokenHandler
 }
 
-func NewAuthService(loggerSrc *logrus.Logger, repo IUserRepository, token auth_utils.ITokenHandler, k string) handlers.AuthProvider {
+func NewAuthService(loggerSrc *logrus.Logger, repo IUserRepository, token auth_utils.ITokenHandler, k string) *UserAdapter {
 	return &UserAdapter{
 		logger:       loggerSrc,
 		userRepo:     repo,

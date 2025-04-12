@@ -4,12 +4,17 @@ import (
 	"context"
 	"net/http"
 	"strings"
-	"todolist/internal/api/handlers"
 	auth_utils "todolist/internal/pkg/authUtils"
 	"todolist/internal/pkg/response"
 
 	"github.com/go-chi/render"
 	"github.com/sirupsen/logrus"
+)
+
+type contextKey string // unexported base type
+
+const (
+	UserIDContextKey contextKey = "userID"
 )
 
 func NewJwtAuthMiddleware(loggerSrc *logrus.Logger, secretSrc string, tokenHandlerSrc auth_utils.ITokenHandler) JwtAuthMiddleware {
@@ -50,7 +55,7 @@ func (m *JwtAuthMiddleware) MiddlewareFunc(next http.Handler) http.Handler {
 			}
 			return
 		}
-		ctx := context.WithValue(r.Context(), handlers.UserIDContextKey, payload.ID)
+		ctx := context.WithValue(r.Context(), UserIDContextKey, payload.ID)
 
 		m.logger.WithFields(
 			logrus.Fields{

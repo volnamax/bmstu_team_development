@@ -5,13 +5,22 @@ import (
 	"net/http"
 	"time"
 	"todolist/internal/adapters"
-	"todolist/internal/api/handlers"
 	"todolist/internal/pkg/response"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 )
+
+type TaskBody struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+type TaskRequest struct {
+	TaskBody
+	CategoryIds []uuid.UUID `json:"category_ids"`
+}
 
 type OwnershipMiddleware struct {
 	userService adapters.UserAdapter
@@ -26,7 +35,7 @@ func NewOwnershipMiddleware(service adapters.UserAdapter, timeout time.Duration)
 
 func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := r.Context().Value(handlers.UserIDContextKey).(string)
+		userID, ok := r.Context().Value(UserIDContextKey).(string)
 		if !ok {
 			//m.logger.Warn("Missing/invalid userID")
 			render.Status(r, http.StatusUnauthorized)
@@ -44,7 +53,7 @@ func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.
 			return
 		}
 
-		var req handlers.TaskRequest
+		var req TaskRequest
 		err = render.DecodeJSON(r.Body, &req)
 		if err != nil {
 			render.Status(r, http.StatusBadRequest)
@@ -80,7 +89,7 @@ func (m *OwnershipMiddleware) CheckTaskMiddleware(next http.Handler) http.Handle
 			return
 		}
 
-		userID, ok := r.Context().Value(handlers.UserIDContextKey).(string)
+		userID, ok := r.Context().Value(UserIDContextKey).(string)
 		if !ok {
 			//m.logger.Warn("Missing/invalid userID")
 			render.Status(r, http.StatusUnauthorized)
