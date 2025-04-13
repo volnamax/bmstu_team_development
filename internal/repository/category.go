@@ -55,13 +55,14 @@ func (c *CategoryRepositoryAdapter) Delete(ctx context.Context, id uuid.UUID) er
 	return nil
 }
 
-func (c *CategoryRepositoryAdapter) GetAll(ctx context.Context, pageIndex, recordsPerPage int) ([]models.Category, error) {
+func (c *CategoryRepositoryAdapter) GetAll(ctx context.Context, pageIndex, recordsPerPage int, userID uuid.UUID) ([]models.Category, error) {
 	var categories []Category
 	var modelCategories []models.Category
 
 	offset := (pageIndex - 1) * recordsPerPage
 
 	result := c.db.WithContext(ctx).
+		Where("user_id = ?", userID).
 		Offset(offset).
 		Limit(recordsPerPage).
 		Find(&categories)

@@ -11,7 +11,7 @@ import (
 type CategoryRepository interface {
 	CreateCategory(ctx context.Context, body *models.CategoryBody) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	GetAll(ctx context.Context, pageIndex, recordsPerPage int) ([]models.Category, error)
+	GetAll(ctx context.Context, pageIndex, recordsPerPage int, userID uuid.UUID) ([]models.Category, error)
 }
 
 type CategoryAdapter struct {
@@ -39,8 +39,8 @@ func (c *CategoryAdapter) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (c *CategoryAdapter) GetAll(ctx context.Context, pageIndex, recordsPerPage int) ([]models.Category, error) {
-	categories, err := c.repository.GetAll(ctx, pageIndex, recordsPerPage)
+func (c *CategoryAdapter) GetAll(ctx context.Context, pageIndex, recordsPerPage int, userID uuid.UUID) ([]models.Category, error) {
+	categories, err := c.repository.GetAll(ctx, pageIndex, recordsPerPage, userID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get all categories")
 	}

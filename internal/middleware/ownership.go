@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"time"
 	"todolist/internal/adapters"
@@ -30,11 +33,25 @@ type OwnershipMiddleware struct {
 func NewOwnershipMiddleware(service adapters.UserAdapter, timeout time.Duration) OwnershipMiddleware {
 	return OwnershipMiddleware{
 		userService: service,
+		timeout:     timeout,
 	}
 }
 
 func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// saving data for further handlers
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("failed to read request body"))
+			return
+		}
+		r.Body.Close()
+
+		// setting saved data for further use
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
 		userID, ok := r.Context().Value(UserIDContextKey).(uuid.UUID)
 		if !ok {
 			render.Status(r, http.StatusUnauthorized)
@@ -43,7 +60,7 @@ func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.
 		}
 
 		var req TaskRequest
-		err := render.DecodeJSON(r.Body, &req)
+		err = json.NewDecoder(bytes.NewReader(bodyBytes)).Decode(&req)
 		if err != nil {
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error(err.Error()))
@@ -55,12 +72,15 @@ func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.
 		defer cancel()
 
 		areCategoriesOwned, err := m.userService.CheckCategoriesOwnership(ctx, userID, req.CategoryIds)
+
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
+			return
 		}
 		if !areCategoriesOwned {
 			render.Status(r, http.StatusForbidden)
+			return
 		}
 
 		next.ServeHTTP(w, r)
@@ -93,9 +113,11 @@ func (m *OwnershipMiddleware) CheckTaskMiddleware(next http.Handler) http.Handle
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
+			return
 		}
 		if !isTaskOwned {
 			render.Status(r, http.StatusForbidden)
+			return
 		}
 
 		next.ServeHTTP(w, r)

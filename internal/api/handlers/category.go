@@ -30,7 +30,7 @@ type CategoriesResponse struct {
 type CategoriesProvider interface {
 	CreateCategory(ctx context.Context, category *models.CategoryBody) error
 	Delete(ctx context.Context, id uuid.UUID) error
-	GetAll(ctx context.Context, pageIndex, recordsPerPage int) ([]models.Category, error)
+	GetAll(ctx context.Context, pageIndex, recordsPerPage int, userid uuid.UUID) ([]models.Category, error)
 }
 
 // @Summary CreateCategory
@@ -143,12 +143,19 @@ func GetCategories(categoryProvider CategoriesProvider, timeout time.Duration) h
 			return
 		}
 
+		userID, ok := r.Context().Value(middleware.UserIDContextKey).(uuid.UUID)
+		if !ok {
+			render.Status(r, http.StatusUnauthorized)
+			render.JSON(w, r, response.Error("Missing userID"))
+			return
+		}
+
 		ctx := r.Context()
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
 		var categories []models.Category
-		categories, err = categoryProvider.GetAll(ctx, req.PageIndex, req.RecordsPerPage)
+		categories, err = categoryProvider.GetAll(ctx, req.PageIndex, req.RecordsPerPage, userID)
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))

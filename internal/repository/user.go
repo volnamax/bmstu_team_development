@@ -117,18 +117,25 @@ func (repo *UserRepositoryAdapter) CheckTaskOwnership(ctx context.Context, userI
 }
 
 func (repo *UserRepositoryAdapter) CheckCategoriesOwnership(ctx context.Context, userID uuid.UUID, categories []uuid.UUID) (bool, error) {
+	fmt.Print(userID, categories)
 	if len(categories) == 0 {
 		return true, nil
 	}
 
+	// Convert UUID slice to string slice
+	categoryStrings := make([]string, len(categories))
+	for i, cat := range categories {
+		categoryStrings[i] = cat.String()
+	}
+
 	var allOwned bool
 
-	tx := repo.db.WithContext(ctx).Raw(`
-        SELECT NOT EXISTS (
-            SELECT 1 FROM categories 
-            WHERE id IN (?) 
+	tx := repo.db.WithContext(ctx).Debug().Raw(`
+        SELECT  NOT EXISTS (
+            SELECT 1 FROM category 
+            WHERE id_category = ANY(?::uuid[]) 
             AND user_id != ?
-        )`, pq.Array(categories), userID).Scan(&allOwned)
+        )`, pq.Array(categoryStrings), userID).Scan(&allOwned)
 
 	if tx.Error != nil {
 		return false, errors.Wrap(tx.Error, "failed raw ownership check")
