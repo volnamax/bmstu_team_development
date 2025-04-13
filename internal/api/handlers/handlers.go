@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"todolist/config"
 	"todolist/internal/adapters"
 	"todolist/internal/middleware"
@@ -52,18 +53,30 @@ func (h Handlers) initTaskHandlers() {
 
 	h.router.Route("/api/v1/task", func(r chi.Router) {
 		r.With(authMiddleware.MiddlewareFunc).Group(func(r chi.Router) {
+
 			r.With(ownMiddleware.CheckCategoriesMiddleware).Group(func(r chi.Router) {
 				r.Post("/", CreateTask(taskUseCase, timeout))
 			})
 
-			r.With(ownMiddleware.CheckTaskMiddleware).Group(func(r chi.Router) {
+			r.Route("/{id}", func(r chi.Router) {
+				r.Use(
+					func(next http.Handler) http.Handler {
+						return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+							// Force Chi to bind {id} by calling a no-op handler
+							chi.URLParam(r, "id")
+							next.ServeHTTP(w, r)
+						})
+					},
+					ownMiddleware.CheckTaskMiddleware, // Now {id} is available here
+				)
 
-				r.With(ownMiddleware.CheckCategoriesMiddleware).Group(func(r chi.Router) {
-					r.Patch("/{id}", EditTask(taskUseCase, timeout))
+				r.Group(func(r chi.Router) {
+					r.With(ownMiddleware.CheckCategoriesMiddleware).Patch("/", EditTask(taskUseCase, timeout))
 				})
-				r.Delete("/{id}", DeleteTask(taskUseCase, timeout))
-				r.Post("/{id}/readiness", ToggleReadinessTask(taskUseCase, timeout))
-				r.Get("/{id}", GetTask(taskUseCase, timeout))
+
+				r.Delete("/", DeleteTask(taskUseCase, timeout))
+				r.Post("/readiness", ToggleReadinessTask(taskUseCase, timeout))
+				r.Get("/", GetTask(taskUseCase, timeout))
 			})
 
 			r.Post("/all", GetAllTasks(taskUseCase, timeout))

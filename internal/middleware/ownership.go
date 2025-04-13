@@ -10,7 +10,7 @@ import (
 	"todolist/internal/adapters"
 	"todolist/internal/pkg/response"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 )
@@ -49,9 +49,6 @@ func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.
 		}
 		r.Body.Close()
 
-		// setting saved data for further use
-		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
 		userID, ok := r.Context().Value(UserIDContextKey).(uuid.UUID)
 		if !ok {
 			render.Status(r, http.StatusUnauthorized)
@@ -78,10 +75,15 @@ func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.
 			render.JSON(w, r, response.Error(err.Error()))
 			return
 		}
+
 		if !areCategoriesOwned {
-			render.Status(r, http.StatusForbidden)
+			render.Status(r, http.StatusForbidden) // Sets status in context
+			render.JSON(w, r, response.Error("Unauthorized access to categories"))
 			return
 		}
+
+		// setting saved data for further use
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 		next.ServeHTTP(w, r)
 	})
@@ -90,7 +92,11 @@ func (m *OwnershipMiddleware) CheckCategoriesMiddleware(next http.Handler) http.
 func (m *OwnershipMiddleware) CheckTaskMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		taskID := chi.URLParam(r, "id")
-
+		if taskID == "" {
+			render.Status(r, http.StatusBadRequest)
+			render.JSON(w, r, response.Error("Task ID required"))
+			return
+		}
 		taskUUID, err := uuid.Parse(taskID)
 		if err != nil {
 			render.Status(r, http.StatusBadRequest)
@@ -117,6 +123,7 @@ func (m *OwnershipMiddleware) CheckTaskMiddleware(next http.Handler) http.Handle
 		}
 		if !isTaskOwned {
 			render.Status(r, http.StatusForbidden)
+			render.JSON(w, r, response.Error("Unauthorized access to task"))
 			return
 		}
 

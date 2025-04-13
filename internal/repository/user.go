@@ -101,7 +101,7 @@ func (repo *UserRepositoryAdapter) CheckTaskOwnership(ctx context.Context, userI
 	var isOwned bool
 
 	tx := repo.db.WithContext(ctx).
-		Raw("SELECT EXISTS(SELECT 1 FROM task WHERE id = ? AND user_id = ?)",
+		Raw("SELECT EXISTS(SELECT 1 FROM task WHERE id_task = ? AND user_id = ?)",
 			taskID, userID).
 		Scan(&isOwned)
 
@@ -130,7 +130,7 @@ func (repo *UserRepositoryAdapter) CheckCategoriesOwnership(ctx context.Context,
 
 	var allOwned bool
 
-	tx := repo.db.WithContext(ctx).Debug().Raw(`
+	tx := repo.db.WithContext(ctx).Raw(`
         SELECT  NOT EXISTS (
             SELECT 1 FROM category 
             WHERE id_category = ANY(?::uuid[]) 
