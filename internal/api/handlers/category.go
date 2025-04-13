@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"time"
+	"todolist/internal/middleware"
 	"todolist/internal/models"
 	"todolist/internal/pkg/response"
 
@@ -48,13 +49,21 @@ type CategoriesProvider interface {
 func CreateCategory(categoryProvider CategoriesProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req CategoryBody
+
+		userID, ok := r.Context().Value(middleware.UserIDContextKey).(uuid.UUID)
+		if !ok {
+			render.Status(r, http.StatusUnauthorized)
+			render.JSON(w, r, response.Error("Missing userID"))
+			return
+		}
+
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
 		}
-		category := models.CategoryBody{Name: req.Name}
+		category := models.CategoryBody{Name: req.Name, UserID: userID}
 
 		ctx := r.Context()
 		ctx, cancel := context.WithTimeout(ctx, timeout)

@@ -91,7 +91,7 @@ func (serv *UserAdapter) SignIn(ctx context.Context, candidate *models.UserAuth)
 		serv.logger.Error(err)
 		return "", err
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(candidate.Password), []byte(user.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(candidate.Password))
 	if err != nil {
 		err = errors.Wrapf(err, "Invalid password for user %s", candidate.Name)
 		serv.logger.Warn(err)

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"todolist/internal/models"
 
 	"github.com/google/uuid"
@@ -11,9 +12,9 @@ import (
 )
 
 type User struct {
-	ID       uuid.UUID `gorm:"primaryKey;column:id;type:uuid;default:gen_random_uuid()"`
-	Name     string    `gorm:"unique;column:name"`
-	Password string    `gorm:"column:password"`
+	ID       uuid.UUID `gorm:"primaryKey;column:id_user;type:uuid;default:gen_random_uuid()"`
+	Name     string    `gorm:"unique;column:user_name"`
+	Password string    `gorm:"column:password_hash"`
 }
 
 func ToDaUser(user models.UserAuth) User {
@@ -64,7 +65,8 @@ func (repo *UserRepositoryAdapter) GetUserByID(ctx context.Context, id uuid.UUID
 func (repo *UserRepositoryAdapter) GetUserByName(ctx context.Context, name string) (*models.User, error) {
 	var userDA User
 
-	tx := repo.db.WithContext(ctx).Where("name = ?", name).First(&userDA)
+	tx := repo.db.WithContext(ctx).Where("user_name = ?", name).First(&userDA)
+	fmt.Print(userDA)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return nil, models.ErrUserNotFound
@@ -140,7 +142,7 @@ func (repo *UserRepositoryAdapter) CheckCategoriesOwnership(ctx context.Context,
 }
 
 func (repo *UserRepositoryAdapter) DeleteUser(ctx context.Context, userID uuid.UUID) error {
-	tx := repo.db.WithContext(ctx).Delete(&User{}, "id = ?", userID)
+	tx := repo.db.WithContext(ctx).Delete(&User{}, "id_user = ?", userID)
 	if tx.Error != nil {
 		return errors.Wrap(tx.Error, "error deleting user")
 	}

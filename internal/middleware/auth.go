@@ -11,10 +11,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type contextKey string // unexported base type
-
-const (
-	UserIDContextKey contextKey = "userID"
+var (
+	UserIDContextKey string = "contextKeyID{}"
 )
 
 func NewJwtAuthMiddleware(loggerSrc *logrus.Logger, secretSrc string, tokenHandlerSrc auth_utils.ITokenHandler) JwtAuthMiddleware {
@@ -56,7 +54,6 @@ func (m *JwtAuthMiddleware) MiddlewareFunc(next http.Handler) http.Handler {
 			return
 		}
 		ctx := context.WithValue(r.Context(), UserIDContextKey, payload.ID)
-
 		m.logger.WithFields(
 			logrus.Fields{
 				"src":    "JwtAuthMiddleware.MiddleFunc",

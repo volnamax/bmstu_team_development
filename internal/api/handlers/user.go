@@ -70,6 +70,8 @@ func SignIn(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 				render.Status(r, http.StatusBadRequest)
 			} else if errors.Is(err, models.ErrUserNotFound) {
 				render.Status(r, http.StatusNotFound)
+			} else {
+				render.Status(r, http.StatusInternalServerError)
 			}
 			render.JSON(w, r, response.Error(err.Error()))
 			return
@@ -128,12 +130,10 @@ func SignUp(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 // @Router /api/v1/user [delete]
 func DeleteUser(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Context().Value(middleware.UserIDContextKey).(string)
-
-		userUUID, err := uuid.Parse(userID)
-		if err != nil {
-			render.JSON(w, r, response.Error("Invalud userID"))
-			render.Status(r, http.StatusBadRequest)
+		userID, ok := r.Context().Value(middleware.UserIDContextKey).(uuid.UUID)
+		if !ok {
+			render.Status(r, http.StatusUnauthorized)
+			render.JSON(w, r, response.Error("Missing userID"))
 			return
 		}
 
@@ -141,7 +141,7 @@ func DeleteUser(authProvider AuthProvider, timeout time.Duration) http.HandlerFu
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		err = authProvider.DeleteUser(ctx, userUUID)
+		err := authProvider.DeleteUser(ctx, userID)
 		if err != nil {
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))

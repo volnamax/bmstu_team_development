@@ -29,10 +29,6 @@ func NewHandlers(cfg *config.ServiceConfig, db *gorm.DB, router *chi.Mux) *Handl
 
 func (h Handlers) InitHandlers() {
 	h.initUserHandlers()
-	tokenHandler := auth_utils.NewJWTTokenHandler()
-	logger := logrus.New()
-	authMiddleware := middleware.NewJwtAuthMiddleware(logger, h.cfg.JWTSecret, tokenHandler)
-	h.router.Use(authMiddleware.MiddlewareFunc)
 	h.initTaskHandlers()
 	h.initCategoryHandlers()
 
@@ -51,23 +47,27 @@ func (h Handlers) initTaskHandlers() {
 
 	ownMiddleware := middleware.NewOwnershipMiddleware(*userUseCase, timeout)
 
+	tokenHandler := auth_utils.NewJWTTokenHandler()
+	authMiddleware := middleware.NewJwtAuthMiddleware(logger, h.cfg.JWTSecret, tokenHandler)
+
 	h.router.Route("/api/v1/task", func(r chi.Router) {
-
-		r.With(ownMiddleware.CheckCategoriesMiddleware).Group(func(r chi.Router) {
-			r.Post("/", CreateTask(taskUseCase, timeout))
-		})
-
-		r.With(ownMiddleware.CheckTaskMiddleware).Group(func(r chi.Router) {
-
+		r.With(authMiddleware.MiddlewareFunc).Group(func(r chi.Router) {
 			r.With(ownMiddleware.CheckCategoriesMiddleware).Group(func(r chi.Router) {
-				r.Patch("/{id}", EditTask(taskUseCase, timeout))
+				r.Post("/", CreateTask(taskUseCase, timeout))
 			})
-			r.Delete("/{id}", DeleteTask(taskUseCase, timeout))
-			r.Post("/{id}/readiness", ToggleReadinessTask(taskUseCase, timeout))
-			r.Get("/{id}", GetTask(taskUseCase, timeout))
-		})
 
-		r.Post("/all", GetAllTasks(taskUseCase, timeout))
+			r.With(ownMiddleware.CheckTaskMiddleware).Group(func(r chi.Router) {
+
+				r.With(ownMiddleware.CheckCategoriesMiddleware).Group(func(r chi.Router) {
+					r.Patch("/{id}", EditTask(taskUseCase, timeout))
+				})
+				r.Delete("/{id}", DeleteTask(taskUseCase, timeout))
+				r.Post("/{id}/readiness", ToggleReadinessTask(taskUseCase, timeout))
+				r.Get("/{id}", GetTask(taskUseCase, timeout))
+			})
+
+			r.Post("/all", GetAllTasks(taskUseCase, timeout))
+		})
 	})
 }
 
@@ -80,10 +80,15 @@ func (h Handlers) initUserHandlers() {
 	logger := logrus.New()
 	userUseCase := adapters.NewAuthService(logger, userRepo, jwtHandler, h.cfg.JWTSecret)
 
+	tokenHandler := auth_utils.NewJWTTokenHandler()
+	authMiddleware := middleware.NewJwtAuthMiddleware(logger, h.cfg.JWTSecret, tokenHandler)
+
 	h.router.Route("/api/v1", func(r chi.Router) {
 		r.Post("/sign-in", SignIn(userUseCase, timeout))
 		r.Post("/sign-up", SignUp(userUseCase, timeout))
-		r.Delete("/user", DeleteUser(userUseCase, timeout))
+		r.With(authMiddleware.MiddlewareFunc).Group(func(r chi.Router) {
+			r.Delete("/user", DeleteUser(userUseCase, timeout))
+		})
 	})
 }
 
@@ -93,9 +98,14 @@ func (h Handlers) initCategoryHandlers() {
 
 	categoryRepo := repository.NewCategoryRepositoryAdapter(h.db)
 	categoryUseCase := adapters.NewCategoryAdapter(categoryRepo)
-	h.router.Route("/api/v1", func(r chi.Router) {
-		r.Get("/category", GetCategories(categoryUseCase, timeout))
-		r.Post("/category", CreateCategory(categoryUseCase, timeout))
-		r.Delete("/category", CreateCategory(categoryUseCase, timeout))
+	tokenHandler := auth_utils.NewJWTTokenHandler()
+	logger := logrus.New()
+	authMiddleware := middleware.NewJwtAuthMiddleware(logger, h.cfg.JWTSecret, tokenHandler)
+	h.router.Route("/api/v1/category", func(r chi.Router) {
+		r.With(authMiddleware.MiddlewareFunc).Group(func(r chi.Router) {
+			r.Post("/all", GetCategories(categoryUseCase, timeout))
+			r.Post("/", CreateCategory(categoryUseCase, timeout))
+			r.Delete("/{id}", DeleteCategory(categoryUseCase, timeout))
+		})
 	})
 }

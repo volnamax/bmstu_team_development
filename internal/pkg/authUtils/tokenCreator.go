@@ -77,6 +77,11 @@ func (hasher JWTTokenHandler) ParseToken(tokenString string, key string) (*Paylo
 		return nil, errors.Wrap(err, "failed to parse token")
 	}
 
+	name, ok := claims["name"].(string)
+	if !ok {
+		return nil, errors.Wrapf(err, "failed to parse the name of user")
+	}
+
 	userID, err := uuid.Parse(claims["ID"].(string))
 
 	if err != nil {
@@ -84,7 +89,7 @@ func (hasher JWTTokenHandler) ParseToken(tokenString string, key string) (*Paylo
 	}
 
 	payload := &Payload{
-		Login: claims["login"].(string),
+		Login: name,
 		ID:    userID,
 	}
 

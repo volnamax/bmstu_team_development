@@ -22,7 +22,7 @@ func NewCategoryRepositoryAdapter(srcDB *gorm.DB) *CategoryRepositoryAdapter {
 type Category struct {
 	ID     uuid.UUID `gorm:"column:id_category;type:uuid;default:gen_random_uuid();primaryKey"`
 	UserID uuid.UUID `gorm:"column:user_id;type:uuid;not null"`
-	Name   string    `gorm:"type:varchar(50);not null"`
+	Name   string    `gorm:"column:name;type:varchar(50);not null"`
 }
 
 func (Category) TableName() string {
@@ -31,9 +31,9 @@ func (Category) TableName() string {
 
 func (c *CategoryRepositoryAdapter) CreateCategory(ctx context.Context, body *models.CategoryBody) error {
 	category := Category{
-		Name: body.Name,
+		Name:   body.Name,
+		UserID: body.UserID,
 	}
-
 	result := c.db.WithContext(ctx).Create(&category)
 	if result.Error != nil {
 		return result.Error
@@ -43,7 +43,7 @@ func (c *CategoryRepositoryAdapter) CreateCategory(ctx context.Context, body *mo
 }
 
 func (c *CategoryRepositoryAdapter) Delete(ctx context.Context, id uuid.UUID) error {
-	result := c.db.WithContext(ctx).Where("id = ?", id).Delete(&Category{})
+	result := c.db.WithContext(ctx).Where("id_category = ?", id).Delete(&Category{})
 	if result.Error != nil {
 		return result.Error
 	}
