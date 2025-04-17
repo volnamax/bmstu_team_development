@@ -21,3 +21,13 @@ docker-compose down -v
 ```bash 
 docker-compose down -v
 ```
+
+**запуск сервиса из командой строки**
+```bash
+POSTGRES_HOST="localhost" \
+POSTGRES_PORT="5432" \
+POSTGRES_USER="admin" \
+POSTGRES_PASSWORD="secret123!" \
+POSTGRES_DB_NAME="taskdb" \
+go run ./cmd/main.go
+```

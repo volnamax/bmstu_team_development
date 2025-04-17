@@ -312,6 +312,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -398,40 +402,7 @@ paths:
       summary: GetTask
       tags:
       - task
-    post:
-      consumes:
-      - application/json
-      description: toggle readiness task
-      operationId: toggle-readiness-task
-      parameters:
-      - description: Task ID (UUID)
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Response'
-        default:
-          description: ""
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - ApiKeyAuth: []
-      summary: ToggleReadinessTask
-      tags:
-      - task
-    put:
+    patch:
       consumes:
       - application/json
       description: edit task
@@ -470,6 +441,40 @@ paths:
       summary: EditTask
       tags:
       - task
+  /api/v1/task/{id}/readiness:
+    post:
+      consumes:
+      - application/json
+      description: toggle readiness task
+      operationId: toggle-readiness-task
+      parameters:
+      - description: Task ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.Response'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/response.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: ToggleReadinessTask
+      tags:
+      - task
   /api/v1/task/all:
     post:
       consumes:
@@ -492,6 +497,10 @@ paths:
             $ref: '#/definitions/handlers.TasksList'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/response.Response'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/response.Response'
         "500":
