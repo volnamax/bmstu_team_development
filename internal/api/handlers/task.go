@@ -54,7 +54,7 @@ type TaskProvider interface {
 // @Summary CreateTask
 // @Security ApiKeyAuth
 // @Tags task
-// @Description create task
+// @Description Создать новую задачу
 // @ID create-task
 // @Accept  json
 // @Produce  json
@@ -99,7 +99,7 @@ func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 // @Summary EditTask
 // @Security ApiKeyAuth
 // @Tags task
-// @Description edit task
+// @Description Изменить задачу по указанному id
 // @ID edit-task
 // @Accept  json
 // @Produce  json
@@ -147,7 +147,7 @@ func EditTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc
 // @Summary GetTask
 // @Security ApiKeyAuth
 // @Tags task
-// @Description get task
+// @Description Получить полное описание задачи по переданному id
 // @ID get-task
 // @Accept  json
 // @Produce  json
@@ -185,7 +185,7 @@ func GetTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc 
 // @Summary GetAllTasks
 // @Security ApiKeyAuth
 // @Tags task
-// @Description get all tasks
+// @Description Получить список коротких описаний задач
 // @ID get-all-tasks
 // @Accept  json
 // @Produce  json
@@ -230,7 +230,7 @@ func GetAllTasks(taskProvider TaskProvider, timeout time.Duration) http.HandlerF
 // @Summary ToggleReadinessTask
 // @Security ApiKeyAuth
 // @Tags task
-// @Description toggle readiness task
+// @Description Изменить статус готовности задачи. Если задача была готова, то станет неготовой или наоборот.
 // @ID toggle-readiness-task
 // @Accept  json
 // @Produce  json
@@ -268,7 +268,7 @@ func ToggleReadinessTask(taskProvider TaskProvider, timeout time.Duration) http.
 // @Summary DeleteTask
 // @Security ApiKeyAuth
 // @Tags task
-// @Description delete task
+// @Description Удалить задачу по переданному id
 // @ID delete-task
 // @Accept  json
 // @Produce  json

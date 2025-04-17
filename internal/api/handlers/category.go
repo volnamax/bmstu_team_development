@@ -22,7 +22,7 @@ type CategoriesResponse struct {
 // @Summary CreateCategory
 // @Security ApiKeyAuth
 // @Tags category
-// @Description create category
+// @Description Создание новой категории задач
 // @ID create-category
 // @Accept  json
 // @Produce  json
@@ -41,7 +41,7 @@ func CreateCategory() http.HandlerFunc {
 // @Summary DeleteCategory
 // @Security ApiKeyAuth
 // @Tags category
-// @Description delete category
+// @Description Удаление категории задачи, при удалении категория пропадет для всех задач
 // @ID delete-category
 // @Accept  json
 // @Produce  json
@@ -60,7 +60,7 @@ func DeleteCategory() http.HandlerFunc {
 // @Summary GetCategories
 // @Security ApiKeyAuth
 // @Tags category
-// @Description get all categories
+// @Description Получить список всех категорий
 // @ID get-categories
 // @Accept  json
 // @Produce  json

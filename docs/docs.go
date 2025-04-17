@@ -22,7 +22,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "create category",
+                "description": "Создание новой категории задачи",
                 "consumes": [
                     "application/json"
                 ],
@@ -83,7 +83,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "get all categories",
+                "description": "Получить список всех категорий",
                 "consumes": [
                     "application/json"
                 ],
@@ -147,7 +147,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "delete category",
+                "description": "Удаление категории задачи, при удалении категория пропадет для всех задач",
                 "consumes": [
                     "application/json"
                 ],
@@ -201,7 +201,7 @@ const docTemplate = `{
         },
         "/api/v1/sign-in": {
             "post": {
-                "description": "SignIn",
+                "description": "Войти в систему",
                 "consumes": [
                     "application/json"
                 ],
@@ -260,7 +260,7 @@ const docTemplate = `{
         },
         "/api/v1/sign-up": {
             "post": {
-                "description": "SignUp",
+                "description": "Регистрирует нового пользователя",
                 "consumes": [
                     "application/json"
                 ],
@@ -324,7 +324,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "create task",
+                "description": "Создать новую задачу",
                 "consumes": [
                     "application/json"
                 ],
@@ -385,7 +385,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "get all tasks",
+                "description": "Получить список коротких описаний задач",
                 "consumes": [
                     "application/json"
                 ],
@@ -449,7 +449,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "get task",
+                "description": "Получить полное описание задачи по переданному id",
                 "consumes": [
                     "application/json"
                 ],
@@ -503,7 +503,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "delete task",
+                "description": "Удалить задачу по переданному id",
                 "consumes": [
                     "application/json"
                 ],
@@ -560,7 +560,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "edit task",
+                "description": "Изменить задачу по указанному id",
                 "consumes": [
                     "application/json"
                 ],
@@ -622,7 +622,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "toggle readiness task",
+                "description": "Изменить статус готовности задачи. Если задача была готова, то станет неготовой или наоборот.",
                 "consumes": [
                     "application/json"
                 ],

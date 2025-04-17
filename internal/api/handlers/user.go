@@ -13,7 +13,7 @@ type Token struct {
 
 // @Summary SignIn
 // @Tags user
-// @Description SignIn
+// @Description Войти в систему
 // @ID sign-in
 // @Accept  json
 // @Produce  json
@@ -31,7 +31,7 @@ func SignIn() http.HandlerFunc {
 
 // @Summary SignUp
 // @Tags user
-// @Description SignUp
+// @Description Регистрирует нового пользователя
 // @ID sign-up
 // @Accept  json
 // @Produce  json
