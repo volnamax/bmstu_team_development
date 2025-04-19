@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -source=task.go -destination=mocks/task.go
 type TaskRepository interface {
 	CreateTask(ctx context.Context, userId uuid.UUID, body *models.TaskBody, categoryIDs []uuid.UUID) error
 	Update(ctx context.Context, id uuid.UUID, body *models.TaskBody, categoryIDs []uuid.UUID) error
