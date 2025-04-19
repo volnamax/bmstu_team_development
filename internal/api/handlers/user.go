@@ -47,7 +47,7 @@ func FromUserInfo(userDTO UserInfo) *models.UserAuth {
 
 // @Summary SignIn
 // @Tags user
-// @Description SignIn
+// @Description Войти в систему
 // @ID sign-in
 // @Accept  json
 // @Produce  json
@@ -118,7 +118,7 @@ func SignIn(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 
 // @Summary SignUp
 // @Tags user
-// @Description SignUp
+// @Description Регистрирует нового пользователя
 // @ID sign-up
 // @Accept  json
 // @Produce  json

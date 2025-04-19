@@ -98,7 +98,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: create category
+      description: Создание новой категории задачи
       operationId: create-category
       parameters:
       - description: category name
@@ -137,7 +137,8 @@ paths:
     delete:
       consumes:
       - application/json
-      description: delete category
+      description: Удаление категории задачи, при удалении категория пропадет для
+        всех задач
       operationId: delete-category
       parameters:
       - description: Category ID (UUID)
@@ -175,7 +176,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: get all categories
+      description: Получить список всех категорий
       operationId: get-categories
       parameters:
       - description: pagination info
@@ -216,7 +217,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: SignIn
+      description: Войти в систему
       operationId: sign-in
       parameters:
       - description: user's name and password
@@ -255,7 +256,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: SignUp
+      description: Регистрирует нового пользователя
       operationId: sign-up
       parameters:
       - description: user's name and password
@@ -294,7 +295,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: create task
+      description: Создать новую задачу
       operationId: create-task
       parameters:
       - description: task info
@@ -333,7 +334,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: delete task
+      description: Удалить задачу по переданному id
       operationId: delete-task
       parameters:
       - description: Task ID (UUID)
@@ -370,7 +371,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: get task
+      description: Получить полное описание задачи по переданному id
       operationId: get-task
       parameters:
       - description: Task ID (UUID)
@@ -405,7 +406,7 @@ paths:
     patch:
       consumes:
       - application/json
-      description: edit task
+      description: Изменить задачу по указанному id
       operationId: edit-task
       parameters:
       - description: task info
@@ -445,7 +446,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: toggle readiness task
+      description: Изменить статус готовности задачи. Если задача была готова, то
+        станет неготовой или наоборот.
       operationId: toggle-readiness-task
       parameters:
       - description: Task ID (UUID)
@@ -479,7 +481,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: get all tasks
+      description: Получить список коротких описаний задач
       operationId: get-all-tasks
       parameters:
       - description: pagination info
