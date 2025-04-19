@@ -8,6 +8,8 @@ import (
 	"todolist/internal/models"
 	"todolist/internal/pkg/response"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -67,9 +69,12 @@ type TaskProvider interface {
 // @Router /api/v1/task [post]
 func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Trace().Msg("get CreateTask request")
+
 		var req TaskRequest
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
+			log.Warn().Err(err).Msg("failed to parse request")
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
@@ -81,6 +86,7 @@ func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 
 		userId, ok := r.Context().Value(middleware.UserIDContextKey).(uuid.UUID)
 		if !ok {
+			log.Error().Msg("no uuid in context")
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, response.Error("unauthorized"))
 			return
@@ -88,6 +94,7 @@ func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 
 		err = taskProvider.CreateTask(ctx, userId, toModelTaskBody(req), req.CategoryIds)
 		if err != nil {
+			log.Err(err).Msg("CreateTask, error from provider")
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
@@ -113,10 +120,13 @@ func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 // @Router /api/v1/task/{id} [patch]
 func EditTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Trace().Msg("get EditTask request")
+
 		id := chi.URLParam(r, "id")
 
 		uuid, err := uuid.Parse(id)
 		if err != nil {
+			log.Warn().Err(err).Msg("failed to parse path parameter")
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid UUID"))
 			return
@@ -125,6 +135,7 @@ func EditTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc
 		var req TaskRequest
 		err = render.DecodeJSON(r.Body, &req)
 		if err != nil {
+			log.Warn().Err(err).Msg("failed to parse request")
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
@@ -136,6 +147,7 @@ func EditTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc
 
 		err = taskProvider.Update(ctx, uuid, toModelTaskBody(req), req.CategoryIds)
 		if err != nil {
+			log.Err(err).Msg("Update, error from provider")
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
@@ -160,9 +172,12 @@ func EditTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc
 // @Router /api/v1/task/{id} [get]
 func GetTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Trace().Msg("get GetTask request")
+
 		id := chi.URLParam(r, "id")
 		uuid, err := uuid.Parse(id)
 		if err != nil {
+			log.Warn().Err(err).Msg("failed to parse path parameter")
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid UUID"))
 			return
@@ -174,6 +189,7 @@ func GetTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc 
 
 		task, err := taskProvider.GetByID(ctx, uuid)
 		if err != nil {
+			log.Err(err).Msg("GetByID, error from provider")
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
@@ -198,9 +214,12 @@ func GetTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc 
 // @Router /api/v1/task/all [post]
 func GetAllTasks(taskProvider TaskProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		log.Trace().Msg("get GetAllTasks request")
+
 		var req Pagination
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
+			log.Warn().Err(err).Msg("failed to parse request")
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
@@ -212,6 +231,7 @@ func GetAllTasks(taskProvider TaskProvider, timeout time.Duration) http.HandlerF
 
 		userId, ok := r.Context().Value(middleware.UserIDContextKey).(uuid.UUID)
 		if !ok {
+			log.Error().Msg("no uuid in context")
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, response.Error("unauthorized"))
 			return
@@ -219,6 +239,7 @@ func GetAllTasks(taskProvider TaskProvider, timeout time.Duration) http.HandlerF
 
 		tasks, err := taskProvider.GetAll(ctx, userId, req.PageIndex, req.RecordsPerPage)
 		if err != nil {
+			log.Err(err).Msg("GetAll, error from provider")
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
@@ -246,6 +267,7 @@ func ToggleReadinessTask(taskProvider TaskProvider, timeout time.Duration) http.
 		id := chi.URLParam(r, "id")
 		uuid, err := uuid.Parse(id)
 		if err != nil {
+			log.Warn().Err(err).Msg("failed to parse path parameter")
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid UUID"))
 			return
@@ -257,6 +279,7 @@ func ToggleReadinessTask(taskProvider TaskProvider, timeout time.Duration) http.
 
 		err = taskProvider.ToggleDone(ctx, uuid)
 		if err != nil {
+			log.Err(err).Msg("ToggleDone, error from provider")
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
@@ -284,6 +307,8 @@ func DeleteTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 		id := chi.URLParam(r, "id")
 		uuid, err := uuid.Parse(id)
 		if err != nil {
+			log.Warn().Err(err).Msg("failed to parse path parameter")
+
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid UUID"))
 			return
@@ -295,6 +320,7 @@ func DeleteTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 
 		err = taskProvider.Delete(ctx, uuid)
 		if err != nil {
+			log.Err(err).Msg("Delete, error from provider")
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
