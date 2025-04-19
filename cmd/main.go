@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	zlog "github.com/rs/zerolog/log"
+
 	"github.com/avast/retry-go"
 	"github.com/go-chi/chi/v5"
 	"gorm.io/driver/postgres"
@@ -47,7 +49,7 @@ func main() {
 	if err != nil {
 		log.Panic("Could not connect to DB after retries: ", err)
 	}
-	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	r := chi.NewRouter()
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 
@@ -60,24 +62,24 @@ func main() {
 	}
 
 	go func() {
+		zlog.Trace().Msg("starting server")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Panic("failed to start server")
 		}
 	}()
 
 	<-done
-
-	log.Println("stopping server")
+	zlog.Trace().Msg("stopping server")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("failed to stop server")
+		zlog.Error().Msg("failed to stop server")
 		return
 	}
 
-	log.Printf("server stopped")
+	zlog.Trace().Msg("server stopped")
 }
 
 func connectWithRetry(dsn string) (*gorm.DB, error) {
