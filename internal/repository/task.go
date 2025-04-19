@@ -22,16 +22,6 @@ func (Task) TableName() string {
 	return "task"
 }
 
-type Category struct {
-	ID     uuid.UUID `gorm:"column:id_category;type:uuid;default:gen_random_uuid();primaryKey"`
-	UserID uuid.UUID `gorm:"column:user_id;type:uuid;not null"`
-	Name   string    `gorm:"type:varchar(50);not null"`
-}
-
-func (Category) TableName() string {
-	return "category"
-}
-
 type GormTaskRepository struct {
 	db *gorm.DB
 }

@@ -9,10 +9,12 @@ import (
 var ErrCategoryNotFound = errors.New("Category not found")
 
 type Category struct {
-	ID   uuid.UUID
-	Name string
+	ID     uuid.UUID
+	Name   string
+	UserID uuid.UUID
 }
 
 type CategoryBody struct {
-	Name string
+	Name   string
+	UserID uuid.UUID
 }

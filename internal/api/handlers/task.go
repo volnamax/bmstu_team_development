@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"time"
+	"todolist/internal/middleware"
 	"todolist/internal/models"
 	"todolist/internal/pkg/response"
 
@@ -78,7 +79,7 @@ func CreateTask(taskProvider TaskProvider, timeout time.Duration) http.HandlerFu
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		userId, ok := r.Context().Value("userId").(uuid.UUID)
+		userId, ok := r.Context().Value(middleware.UserIDContextKey).(uuid.UUID)
 		if !ok {
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, response.Error("unauthorized"))
@@ -209,7 +210,7 @@ func GetAllTasks(taskProvider TaskProvider, timeout time.Duration) http.HandlerF
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		userId, ok := r.Context().Value("userId").(uuid.UUID)
+		userId, ok := r.Context().Value(middleware.UserIDContextKey).(uuid.UUID)
 		if !ok {
 			render.Status(r, http.StatusUnauthorized)
 			render.JSON(w, r, response.Error("unauthorized"))

@@ -19,6 +19,7 @@ import (
 	_ "todolist/docs"
 	"todolist/internal/api/handlers"
 
+	"github.com/rs/zerolog"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -46,7 +47,7 @@ func main() {
 	if err != nil {
 		log.Panic("Could not connect to DB after retries: ", err)
 	}
-
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	r := chi.NewRouter()
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
 

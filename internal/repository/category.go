@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"todolist/internal/adapters"
 	"todolist/internal/models"
 
 	"github.com/google/uuid"
@@ -13,22 +12,27 @@ type CategoryRepositoryAdapter struct {
 	db *gorm.DB
 }
 
-func NewCategoryRepositoryAdapter(srcDB *gorm.DB) adapters.CategoryRepository {
+func NewCategoryRepositoryAdapter(srcDB *gorm.DB) *CategoryRepositoryAdapter {
 	return &CategoryRepositoryAdapter{
 		db: srcDB,
 	}
 }
 
 type Category struct {
-	ID   uuid.UUID `gorm:"primaryKey;column:id;type:uuid;default:gen_random_uuid()"`
-	Name string    `gorm:"unique;column:name"`
+	ID     uuid.UUID `gorm:"column:id_category;type:uuid;default:gen_random_uuid();primaryKey"`
+	UserID uuid.UUID `gorm:"column:user_id;type:uuid;not null"`
+	Name   string    `gorm:"column:name;type:varchar(50);not null"`
+}
+
+func (Category) TableName() string {
+	return "category"
 }
 
 func (c *CategoryRepositoryAdapter) CreateCategory(ctx context.Context, body *models.CategoryBody) error {
 	category := Category{
-		Name: body.Name,
+		Name:   body.Name,
+		UserID: body.UserID,
 	}
-
 	result := c.db.WithContext(ctx).Create(&category)
 	if result.Error != nil {
 		return result.Error
@@ -38,7 +42,7 @@ func (c *CategoryRepositoryAdapter) CreateCategory(ctx context.Context, body *mo
 }
 
 func (c *CategoryRepositoryAdapter) Delete(ctx context.Context, id uuid.UUID) error {
-	result := c.db.WithContext(ctx).Where("id = ?", id).Delete(&Category{})
+	result := c.db.WithContext(ctx).Where("id_category = ?", id).Delete(&Category{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -50,13 +54,14 @@ func (c *CategoryRepositoryAdapter) Delete(ctx context.Context, id uuid.UUID) er
 	return nil
 }
 
-func (c *CategoryRepositoryAdapter) GetAll(ctx context.Context, pageIndex, recordsPerPage int) ([]models.Category, error) {
+func (c *CategoryRepositoryAdapter) GetAll(ctx context.Context, pageIndex, recordsPerPage int, userID uuid.UUID) ([]models.Category, error) {
 	var categories []Category
 	var modelCategories []models.Category
 
 	offset := (pageIndex - 1) * recordsPerPage
 
 	result := c.db.WithContext(ctx).
+		Where("user_id = ?", userID).
 		Offset(offset).
 		Limit(recordsPerPage).
 		Find(&categories)
