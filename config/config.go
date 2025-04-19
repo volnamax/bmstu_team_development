@@ -15,6 +15,7 @@ type Config struct {
 
 type ServiceConfig struct {
 	TaskTimeout time.Duration `env:"TASK_TIMEOUT" envDefault:"1m"`
+	JWTSecret   string        `env:"JWT_SECRET" envDefault:"secret"`
 }
 
 type PostgresConfig struct {
