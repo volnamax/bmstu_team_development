@@ -9,7 +9,6 @@ import (
 	"todolist/internal/repository"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -43,13 +42,12 @@ func (h Handlers) initTaskHandlers() {
 
 	userRepo := repository.NewUserRepositoryAdapter(h.db)
 	jwtHandler := auth_utils.NewJWTTokenHandler()
-	logger := logrus.New()
-	userUseCase := adapters.NewAuthService(logger, userRepo, jwtHandler, h.cfg.JWTSecret)
+	userUseCase := adapters.NewAuthService(userRepo, jwtHandler, h.cfg.JWTSecret)
 
 	ownMiddleware := middleware.NewOwnershipMiddleware(*userUseCase, timeout)
 
 	tokenHandler := auth_utils.NewJWTTokenHandler()
-	authMiddleware := middleware.NewJwtAuthMiddleware(logger, h.cfg.JWTSecret, tokenHandler)
+	authMiddleware := middleware.NewJwtAuthMiddleware(h.cfg.JWTSecret, tokenHandler)
 
 	h.router.Route("/api/v1/task", func(r chi.Router) {
 		r.With(authMiddleware.MiddlewareFunc).Group(func(r chi.Router) {
@@ -90,11 +88,10 @@ func (h Handlers) initUserHandlers() {
 
 	userRepo := repository.NewUserRepositoryAdapter(h.db)
 	jwtHandler := auth_utils.NewJWTTokenHandler()
-	logger := logrus.New()
-	userUseCase := adapters.NewAuthService(logger, userRepo, jwtHandler, h.cfg.JWTSecret)
+	userUseCase := adapters.NewAuthService(userRepo, jwtHandler, h.cfg.JWTSecret)
 
 	tokenHandler := auth_utils.NewJWTTokenHandler()
-	authMiddleware := middleware.NewJwtAuthMiddleware(logger, h.cfg.JWTSecret, tokenHandler)
+	authMiddleware := middleware.NewJwtAuthMiddleware(h.cfg.JWTSecret, tokenHandler)
 
 	h.router.Route("/api/v1", func(r chi.Router) {
 		r.Post("/sign-in", SignIn(userUseCase, timeout))
@@ -112,8 +109,8 @@ func (h Handlers) initCategoryHandlers() {
 	categoryRepo := repository.NewCategoryRepositoryAdapter(h.db)
 	categoryUseCase := adapters.NewCategoryAdapter(categoryRepo)
 	tokenHandler := auth_utils.NewJWTTokenHandler()
-	logger := logrus.New()
-	authMiddleware := middleware.NewJwtAuthMiddleware(logger, h.cfg.JWTSecret, tokenHandler)
+
+	authMiddleware := middleware.NewJwtAuthMiddleware(h.cfg.JWTSecret, tokenHandler)
 	h.router.Route("/api/v1/category", func(r chi.Router) {
 		r.With(authMiddleware.MiddlewareFunc).Group(func(r chi.Router) {
 			r.Post("/all", GetCategories(categoryUseCase, timeout))

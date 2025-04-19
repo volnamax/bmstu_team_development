@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-
 	"todolist/internal/models"
 
 	"github.com/google/uuid"

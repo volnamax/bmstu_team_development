@@ -117,7 +117,6 @@ func (repo *UserRepositoryAdapter) CheckTaskOwnership(ctx context.Context, userI
 }
 
 func (repo *UserRepositoryAdapter) CheckCategoriesOwnership(ctx context.Context, userID uuid.UUID, categories []uuid.UUID) (bool, error) {
-	fmt.Print(userID, categories)
 	if len(categories) == 0 {
 		return true, nil
 	}
