@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 )
 
 type CategoryBody struct {
@@ -47,25 +48,47 @@ type CategoriesProvider interface {
 // @Router /api/v1/category [post]
 func CreateCategory(categoryProvider CategoriesProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger := zerolog.Ctx(r.Context())
+
+		logger.Info().
+			Str("method", r.Method).
+			Str("path", r.URL.Path).
+			Msg("CreateCategory: started processing request")
+
 		var req CategoryBody
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
+			logger.Warn().
+				Err(err).
+				Msg("CreateCategory: failed to decode request body")
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
 		}
-		category := models.CategoryBody{Name: req.Name}
 
+		logger.Debug().
+			Str("category_name", req.Name).
+			Msg("CreateCategory: received create request")
+
+		category := models.CategoryBody{Name: req.Name}
 		ctx := r.Context()
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
 		err = categoryProvider.CreateCategory(ctx, &category)
 		if err != nil {
+			logger.Error().
+				Err(err).
+				Str("category_name", req.Name).
+				Msg("CreateCategory: failed to create category")
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
 		}
+
+		logger.Info().
+			Str("category_name", req.Name).
+			Msg("CreateCategory: successfully created new category")
 		render.Status(r, http.StatusOK)
 	}
 }
@@ -85,9 +108,24 @@ func CreateCategory(categoryProvider CategoriesProvider, timeout time.Duration) 
 // @Router /api/v1/category/{id} [delete]
 func DeleteCategory(categoryProvider CategoriesProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger := zerolog.Ctx(r.Context())
+
+		logger.Info().
+			Str("method", r.Method).
+			Str("path", r.URL.Path).
+			Msg("DeleteCategory: started processing request")
+
 		id := chi.URLParam(r, "id")
+		logger.Debug().
+			Str("category_id", id).
+			Msg("DeleteCategory: received category ID")
+
 		uuid, err := uuid.Parse(id)
 		if err != nil {
+			logger.Warn().
+				Str("category_id", id).
+				Err(err).
+				Msg("DeleteCategory: invalid category UUID format")
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error("invalid UUID"))
 			return
@@ -100,13 +138,24 @@ func DeleteCategory(categoryProvider CategoriesProvider, timeout time.Duration) 
 		err = categoryProvider.Delete(ctx, uuid)
 		if err != nil {
 			if errors.Is(err, models.ErrCategoryNotFound) {
+				logger.Warn().
+					Str("category_id", uuid.String()).
+					Msg("DeleteCategory: category not found")
 				render.Status(r, http.StatusNotFound)
 			} else {
+				logger.Error().
+					Str("category_id", uuid.String()).
+					Err(err).
+					Msg("DeleteCategory: failed to delete category")
 				render.Status(r, http.StatusInternalServerError)
 			}
 			render.JSON(w, r, response.Error(err.Error()))
 			return
 		}
+
+		logger.Info().
+			Str("category_id", uuid.String()).
+			Msg("DeleteCategory: successfully deleted category")
 		render.Status(r, http.StatusOK)
 	}
 }
@@ -126,25 +175,48 @@ func DeleteCategory(categoryProvider CategoriesProvider, timeout time.Duration) 
 // @Router /api/v1/category/all [post]
 func GetCategories(categoryProvider CategoriesProvider, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		logger := zerolog.Ctx(r.Context())
+
+		logger.Info().
+			Str("method", r.Method).
+			Str("path", r.URL.Path).
+			Msg("GetCategories: started processing request")
+
 		var req Pagination
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
+			logger.Warn().
+				Err(err).
+				Msg("GetCategories: failed to decode request body")
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
 		}
 
+		logger.Debug().
+			Int("page_index", req.PageIndex).
+			Int("records_per_page", req.RecordsPerPage).
+			Msg("GetCategories: received pagination parameters")
+
 		ctx := r.Context()
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		var categories []models.Category
-		categories, err = categoryProvider.GetAll(ctx, req.PageIndex, req.RecordsPerPage)
+		categories, err := categoryProvider.GetAll(ctx, req.PageIndex, req.RecordsPerPage)
 		if err != nil {
+			logger.Error().
+				Err(err).
+				Int("page_index", req.PageIndex).
+				Int("records_per_page", req.RecordsPerPage).
+				Msg("GetCategories: failed to fetch categories")
 			render.Status(r, http.StatusInternalServerError)
 			render.JSON(w, r, response.Error(err.Error()))
 			return
 		}
+
+		logger.Info().
+			Int("count", len(categories)).
+			Msg("GetCategories: successfully fetched categories")
 
 		render.Status(r, http.StatusOK)
 		render.JSON(w, r, toCategoriesResponse(categories))
