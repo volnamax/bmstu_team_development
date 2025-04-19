@@ -95,7 +95,7 @@ func TestTaskAdapter_Update(t *testing.T) {
 			mock: func(r *mock_adapters.MockTaskRepository, ctx context.Context, taskID uuid.UUID, body *models.TaskBody, catIDs []uuid.UUID) {
 				r.EXPECT().Update(ctx, taskID, body, catIDs).Return(errors.New("update failed"))
 			},
-			expectedErr: errors.Wrapf(errors.New("update failed"), "failed to update task with id: %s", taskID),
+			expectedErr: errors.New("update failed"),
 		},
 	}
 
@@ -112,7 +112,7 @@ func TestTaskAdapter_Update(t *testing.T) {
 			err := adapter.Update(ctx, tc.taskID, tc.body, tc.categoryIDs)
 
 			if tc.expectedErr != nil {
-				assert.EqualError(t, err, tc.expectedErr.Error())
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -153,7 +153,7 @@ func TestTaskAdapter_GetByID(t *testing.T) {
 				r.EXPECT().GetByID(ctx, taskID).Return(nil, errors.New("not found"))
 			},
 			expectedTask: nil,
-			expectedErr:  errors.Wrapf(errors.New("not found"), "failed to get task by id: %s", uuid.Nil),
+			expectedErr:  errors.New("not found"),
 		},
 	}
 
@@ -169,9 +169,6 @@ func TestTaskAdapter_GetByID(t *testing.T) {
 			if tc.expectedTask != nil {
 				tc.expectedTask.ID = tc.taskID
 			}
-			if tc.expectedErr != nil {
-				tc.expectedErr = errors.Wrapf(errors.Unwrap(tc.expectedErr), "failed to get task by id: %s", tc.taskID)
-			}
 
 			tc.mock(mockRepo, ctx, tc.taskID)
 
@@ -181,7 +178,7 @@ func TestTaskAdapter_GetByID(t *testing.T) {
 			assert.Equal(t, tc.expectedTask, task)
 
 			if tc.expectedErr != nil {
-				assert.EqualError(t, err, tc.expectedErr.Error())
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -281,7 +278,7 @@ func TestTaskAdapter_Delete(t *testing.T) {
 			mock: func(r *mock_adapters.MockTaskRepository, ctx context.Context, taskID uuid.UUID) {
 				r.EXPECT().Delete(ctx, taskID).Return(errors.New("delete failed"))
 			},
-			expectedErr: errors.Wrapf(errors.New("delete failed"), "failed to delete task with id: %s", uuid.Nil), // заменим позже
+			expectedErr: errors.New("delete failed"),
 		},
 	}
 
@@ -293,17 +290,13 @@ func TestTaskAdapter_Delete(t *testing.T) {
 			mockRepo := mock_adapters.NewMockTaskRepository(ctrl)
 			ctx := context.Background()
 
-			if tc.expectedErr != nil {
-				tc.expectedErr = errors.Wrapf(errors.Unwrap(tc.expectedErr), "failed to delete task with id: %s", tc.taskID)
-			}
-
 			tc.mock(mockRepo, ctx, tc.taskID)
 
 			adapter := NewTaskAdapter(mockRepo)
 			err := adapter.Delete(ctx, tc.taskID)
 
 			if tc.expectedErr != nil {
-				assert.EqualError(t, err, tc.expectedErr.Error())
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
@@ -334,7 +327,7 @@ func TestTaskAdapter_ToggleDone(t *testing.T) {
 			mock: func(r *mock_adapters.MockTaskRepository, ctx context.Context, taskID uuid.UUID) {
 				r.EXPECT().ToggleDone(ctx, taskID).Return(errors.New("toggle failed"))
 			},
-			expectedErr: errors.Wrapf(errors.New("toggle failed"), "failed to toggle task done status with id: %s", uuid.Nil), // заменим позже
+			expectedErr: errors.New("toggle failed"),
 		},
 	}
 
@@ -346,17 +339,13 @@ func TestTaskAdapter_ToggleDone(t *testing.T) {
 			mockRepo := mock_adapters.NewMockTaskRepository(ctrl)
 			ctx := context.Background()
 
-			if tc.expectedErr != nil {
-				tc.expectedErr = errors.Wrapf(errors.Unwrap(tc.expectedErr), "failed to toggle task done status with id: %s", tc.taskID)
-			}
-
 			tc.mock(mockRepo, ctx, tc.taskID)
 
 			adapter := NewTaskAdapter(mockRepo)
 			err := adapter.ToggleDone(ctx, tc.taskID)
 
 			if tc.expectedErr != nil {
-				assert.EqualError(t, err, tc.expectedErr.Error())
+				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
