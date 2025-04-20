@@ -30,6 +30,9 @@ jobs:
       - name: Run go vet
         run: go vet ./...
 
+      - name: Run unit tests
+        run: go test -v ./...
+
       - name: Install golangci-lint
         run: |
           curl -sSfL https://github.com/golangci/golangci-lint/releases/download/v2.1.1/golangci-lint-2.1.1-linux-amd64.tar.gz | tar -xzv
