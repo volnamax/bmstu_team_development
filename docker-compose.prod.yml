@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  app:
+    image: volnamax1/todolist:latest
+    container_name: todo-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret123!
+      POSTGRES_DB_NAME: taskdb
+    networks:
+      - prod-network
+
+  postgres:
+    image: postgres:latest
+    container_name: todo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret123!
+      POSTGRES_DB: taskdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d
+    networks:
+      - prod-network
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "admin" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+
+volumes:
+  pgdata:
+
+networks:
+  prod-network:
