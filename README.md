@@ -31,3 +31,9 @@ POSTGRES_PASSWORD="secret123!" \
 POSTGRES_DB_NAME="taskdb" \
 go run ./cmd/main.go
 ```
+
+
+локальный литер
+```bash
+golangci-lint run
+```
