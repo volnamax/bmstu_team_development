@@ -1,5 +1,5 @@
 # Stage 1: build Go binary
-FROM golang:1.21 AS builder
+FROM golang:1.23.8 AS builder
 
 WORKDIR /app
 COPY . .
