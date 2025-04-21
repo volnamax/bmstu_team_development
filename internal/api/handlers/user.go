@@ -159,7 +159,36 @@ func SignUp(authProvider AuthProvider, timeout time.Duration) http.HandlerFunc {
 		log.Debug().
 			Str("username", req.Name).
 			Msg("parsed signup request")
-		render.Status(r, http.StatusOK)
+
+		tokenStr, err := authProvider.SignIn(ctx, FromUserInfo(req))
+		if err != nil {
+			if errors.Is(err, auth_utils.ErrInvalidToken) {
+				log.Warn().
+					Str("username", req.Name).
+					Err(err).
+					Msg("SignUp: invalid credentials provided")
+				render.Status(r, http.StatusBadRequest)
+			} else if errors.Is(err, models.ErrUserNotFound) {
+				log.Warn().
+					Str("username", req.Name).
+					Err(err).
+					Msg("SignUp: user not found")
+				render.Status(r, http.StatusNotFound)
+			} else {
+				log.Error().
+					Str("username", req.Name).
+					Err(err).
+					Msg("SignUp: authentication failed")
+				render.Status(r, http.StatusInternalServerError)
+			}
+			render.JSON(w, r, response.Error(err.Error()))
+			return
+		}
+
+		log.Info().
+			Str("username", req.Name).
+			Msg("SignUp: successfully authenticated user")
+		render.JSON(w, r, Token{Token: tokenStr})
 	}
 }
 
