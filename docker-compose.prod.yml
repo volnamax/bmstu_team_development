@@ -8,8 +8,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - "8080:8080"
     env_file: .env
     environment:
       POSTGRES_HOST: postgres
@@ -17,33 +15,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB_NAME: ${POSTGRES_DB_NAME}
-    networks:
-      - prod-network
-
-  postgres:
-    image: postgres:latest
-    env_file: .env
-    container_name: todo-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB_NAME}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./db_init:/docker-entrypoint-initdb.d
-    networks:
-      - prod-network
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB_NAME}"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
     ports:
-      - "5432:5432"
-
-volumes:
-  pgdata:
-
-networks:
-  prod-network:
+      - "8080:8080"
+    networks:
+      - backend
