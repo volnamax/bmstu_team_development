@@ -17,13 +17,13 @@ POSTGRES_HOST=postgres
 **запуститься**
 
 ```bash 
-docker-compose up --build
+ docker-compose -f docker-compose.yml -f docker-compose.local.yml up --build
 ```
 
 **выключить и удалить бд**
 
 ```bash 
-docker-compose down -v
+ docker-compose -f docker-compose.yml -f docker-compose.local.yml down -v
 ```
 
 **запуск сервиса из командой строки**
@@ -43,6 +43,10 @@ go run ./cmd/main.go
 golangci-lint run
 ```
 
+##  Deploy
+```bash
+./deploy.sh
+```
 
 Остановка контейнеров:
 
