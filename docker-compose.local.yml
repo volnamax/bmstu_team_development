@@ -2,10 +2,12 @@ version: '3.8'
 
 services:
   app:
-    build: .
-    command: go run ./cmd/main.go
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     volumes:
       - .:/app
+    env_file: .env
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -15,6 +17,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
   pgadmin:
     image: dpage/pgadmin4
     env_file: .env
