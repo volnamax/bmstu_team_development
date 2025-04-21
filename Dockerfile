@@ -1,10 +1,15 @@
-FROM golang:1.23.8
-
+# Stage 1: Build
+FROM golang:1.23.8-alpine AS builder
 WORKDIR /app
 COPY . .
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/bin/main ./cmd/main.go
 
-RUN go mod tidy
-RUN go build -o app ./cmd/main.go
+# Stage 2: Runtime
+FROM alpine:latest
+WORKDIR /app
+COPY --from=builder /app/bin/main .
+COPY --from=builder /app/.env .  # Если нужно
 
 EXPOSE 8080
-CMD ["./app"]
+CMD ["./main"]

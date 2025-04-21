@@ -35,7 +35,7 @@ services:
     networks:
       - prod-network
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "admin" ]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB_NAME}"]
       interval: 5s
       timeout: 3s
       retries: 5
