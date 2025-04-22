@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    image: volnamax1/todolist:latest
+    container_name: todo-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB_NAME: ${POSTGRES_DB_NAME}
+    ports:
+      - "8080:8080"
+    networks:
+      - backend

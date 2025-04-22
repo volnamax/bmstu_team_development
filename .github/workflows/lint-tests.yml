@@ -8,9 +8,10 @@ on:
     branches:
       - '*'
 
+
 jobs:
-  lint:
-    runs-on: ubuntu-20.04
+  lint-tests:
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -29,6 +30,9 @@ jobs:
 
       - name: Run go vet
         run: go vet ./...
+
+      - name: Run unit tests
+        run: go test -v ./...
 
       - name: Install golangci-lint
         run: |
