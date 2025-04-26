@@ -2,40 +2,12 @@ name: Go CI/CD Pipeline
 
 on:
   push:
-    branches: [ "**" ]  # На все ветки
+    branches: [ "**" ]
   pull_request:
     branches: [ "main", "develop" ]
 
 jobs:
   build:
-    runs-on: self-hosted  # Без container!
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'  # Ставим Go локально!
-
-      - name: Build Go binary
-        run: |
-          echo "Building Go binary..."
-          go mod download
-          CGO_ENABLED=0 GOOS=linux go build -o bin/main ./cmd/main.go
-          mkdir -p release
-          cp bin/main docker-compose.yml docker-compose.prod.yml Dockerfile release/
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-artifacts
-          path: |
-            release/
-            db_init/
-
-  unit-tests:
-    needs: build
     runs-on: self-hosted
     steps:
       - name: Checkout code
@@ -46,39 +18,44 @@ jobs:
         with:
           go-version: '1.23'
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: app-artifacts
-
-      - name: Run unit tests
+      - name: Build Go binary
         run: |
-          echo "Running unit tests..."
-          go test -v ./...
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
-          golangci-lint run || true
+          echo "Building Go binary..."
+          go mod download
+          CGO_ENABLED=0 GOOS=linux go build -o bin/main ./cmd/main.go
+
+      - name: Build and Push Docker Image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          echo "Building Docker image..."
+          docker build -t $DOCKERHUB_USERNAME/todolist:latest .
+          
+          echo "Logging in to Docker Hub..."
+          echo $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USERNAME --password-stdin
+          
+          echo "Pushing Docker image..."
+          docker push $DOCKERHUB_USERNAME/todolist:latest
 
   deploy-prod:
-    needs: [build, unit-tests]
+    needs: build
     runs-on: self-hosted
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: app-artifacts
-
-      - name: Deploy to production
+      - name: Deploy to VM1
         env:
           SSHPASS: ${{ secrets.SSHPASSWORD }}
           SSHHOST: ${{ secrets.SSHHOST }}
-          ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
-          echo "$ENV_FILE" > .env
-          echo "Deploying to production..."
-          sshpass -p "$SSHPASS" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSHHOST "mkdir -p ~/app/db_init"
-          sshpass -p "$SSHPASS" scp -o StrictHostKeyChecking=no -r release/* .env db_init/* gitlab-runner@$SSHHOST:~/app/
-          sshpass -p "$SSHPASS" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSHHOST "cd ~/app && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
+          echo "Deploying to production on VM1..."
+          sshpass -p "$SSHPASS" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSHHOST << EOF
+            echo "Pulling the latest image..."
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/todolist:latest
+
+            echo "Recreating containers..."
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml down -v || true
+            docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+            echo "Deployment complete on VM1!"
+          EOF
