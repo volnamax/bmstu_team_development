@@ -3,31 +3,24 @@ name: Deploy from Docker Hub
 on:
   push:
     branches: [main, develop]
-    
+
 jobs:
   deploy:
-    runs-on: self-hosted 
+    runs-on: self-hosted
     environment: production
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Login to Docker Hub (если образ приватный)
+    - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Deploy using docker-compose
-      env:
-        DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
       run: |
-        set -e
+        echo "Deploying from Docker Hub..."
         
-        echo "Pulling the latest image from Docker Hub..."
-        docker pull $DOCKER_USER/todolist:latest
-
-        echo "Recreating containers..."
+        docker pull volnamax1/todolist:latest
+        
         docker-compose -f docker-compose.yml -f docker-compose.prod.yml down -v
         docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
