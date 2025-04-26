@@ -1,79 +1,71 @@
-name: CI/CD Pipeline
+name: Go CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
-      - develop
-  workflow_dispatch: # чтобы руками можно было запустить (аналог "when: manual" для deploy)
+    branches: [ "**" ]  # Запуск для всех веток
+  pull_request:
+    branches: [ "main", "develop" ]  # Запуск для PR в main/develop
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted  # Используем свой раннер (аналог GitLab Runner)
+    container: golang:1.23.8-alpine
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.23.8
+    - name: Build Go binary
+      run: |
+        echo "Building Go binary..."
+        go mod download
+        CGO_ENABLED=0 GOOS=linux go build -o bin/main ./cmd/main.go
+        mkdir -p release
+        cp bin/main docker-compose.yml docker-compose.prod.yml Dockerfile release/
 
-      - name: Build Go binary
-        run: |
-          go mod download
-          CGO_ENABLED=0 GOOS=linux go build -o bin/main ./cmd/main.go
-          mkdir -p release
-          cp bin/main docker-compose.yml docker-compose.prod.yml Dockerfile release/
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifacts
-          path: |
-            release/
-            db_init/
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-artifacts
+        path: |
+          release/
+          db_init/
 
   test:
-    needs: build
-    runs-on: ubuntu-latest
+    needs: build  # Зависит от сборки
+    runs-on: self-hosted
+    container: golang:1.23.8-alpine
+
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: app-artifacts
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.23.8
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: release-artifacts
-
-      - name: Run Unit Tests
-        run: |
-          go test -v ./...
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
-          golangci-lint run || true
+    - name: Run tests
+      run: |
+        echo "Running unit tests..."
+        go test -v ./...
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
+        golangci-lint run || true
 
   deploy:
-    needs: build
-    runs-on: ubuntu-latest
+    needs: [build, test]  # Зависит от сборки и тестов
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: release-artifacts
+    runs-on: self-hosted
 
-      - name: Deploy to Production Server
-        env:
-          SSH_PASSWORD: ${{ secrets.SSHPASSWORD }}
-          SSH_HOST: ${{ secrets.SSHHOST }}
-          ENV_FILE: ${{ secrets.ENV_FILE }}
-        run: |
-          echo "$ENV_FILE" > .env
-          sshpass -p ${{ secrets.SSHPASSWORD }} ssh -o StrictHostKeyChecking=no gitlab-runner${{ secrets.SSHHOST }} "mkdir -p ~/app/db_init"
-          sshpass -p ${{ secrets.SSHPASSWORD }} scp -o StrictHostKeyChecking=no -r release/* .env db_init/* gitlab-runner@${{ secrets.SSHHOST }}:~/app/
-          sshpass -p ${{ secrets.SSHPASSWORD }} ssh -o StrictHostKeyChecking=no gitlab-runner@${{ secrets.SSHHOST }} "cd ~/app && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: app-artifacts
+
+    - name: Deploy to VM1
+      env:
+        SSHPASS: ${{ secrets.SSHPASSWORD }}  # Пароль от gitlab-runner
+        SSH_HOST: ${{ secrets.SSH_HOST }}    # IP ВМ1
+      run: |
+        echo "Deploying to production..."
+        sshpass -p "$SSHPASS" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSH_HOST "mkdir -p ~/app/db_init"
+        sshpass -p "$SSHPASS" scp -r release/* .env db_init/* gitlab-runner@$SSH_HOST:~/app/
+        sshpass -p "$SSHPASS" ssh gitlab-runner@$SSH_HOST "cd ~/app && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
