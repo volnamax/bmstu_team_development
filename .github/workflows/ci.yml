@@ -1,61 +1,51 @@
-name: Go CI/CD Pipeline
+image: golang:1.23.8-alpine
 
-on:
-  push:
-    branches: [ "**" ]
-  pull_request:
-    branches: [ "main", "develop" ]
+stages:
+  - build
+  - test
+  - deploy
 
-jobs:
-  build:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+build:
+  stage: build
+  tags:
+    - vm2
+  script:
+    - echo "Building Go binary..."
+    - go mod download
+    - CGO_ENABLED=0 GOOS=linux go build -o bin/main ./cmd/main.go
+    - mkdir -p release
+    - cp bin/main docker-compose.yml docker-compose.prod.yml Dockerfile release/
+  artifacts:
+    paths:
+      - release/
+      - db_init/
+    expire_in: 1 hour
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-
-      - name: Build Go binary
-        run: |
-          echo "Building Go binary..."
-          go mod download
-          CGO_ENABLED=0 GOOS=linux go build -o bin/main ./cmd/main.go
-
-      - name: Build and Push Docker Image
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
-        run: |
-          echo "Building Docker image..."
-          docker build -t $DOCKERHUB_USERNAME/todolist:latest .
-          
-          echo "Logging in to Docker Hub..."
-          echo $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USERNAME --password-stdin
-          
-          echo "Pushing Docker image..."
-          docker push $DOCKERHUB_USERNAME/todolist:latest
-
-  deploy-prod:
-    needs: build
-    runs-on: self-hosted
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-    steps:
-      - name: Deploy to VM1
-        env:
-          SSHPASS: ${{ secrets.SSHPASSWORD }}
-          SSHHOST: ${{ secrets.SSHHOST }}
-        run: |
-          echo "Deploying to production on VM1..."
-          sshpass -p "$SSHPASS" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSHHOST << EOF
-            echo "Pulling the latest image..."
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/todolist:latest
-
-            echo "Recreating containers..."
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml down -v || true
-            docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-
-            echo "Deployment complete on VM1!"
-          EOF
+ 
+unit-tests:
+  stage: test
+  tags:
+    - vm2
+  dependencies: 
+    - build
+  script:
+    - echo "Running unit tests..."
+    - go test -v ./...
+    - go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
+    - golangci-lint run || true
+ 
+deploy-prod:
+  stage: deploy
+  tags:
+    - vm2
+  only:
+    - main
+    - develop
+  when: manual 
+  before_script:
+    - echo "$ENV_FILE" > .env
+  script:
+    - echo "Deploying to production..."
+    - sshpass -p "$SSHPASSWORD" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSHHOST "mkdir -p ~/app/db_init"
+    - sshpass -p "$SSHPASSWORD" scp -o StrictHostKeyChecking=no -r release/* .env db_init/* gitlab-runner@$SSHHOST:~/app/
+    - sshpass -p "$SSHPASSWORD" ssh gitlab-runner@$SSHHOST "cd ~/app && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
