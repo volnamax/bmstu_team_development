@@ -42,20 +42,21 @@ jobs:
           go test -v ./...
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
           golangci-lint run || true
-
   deploy-prod:
     needs: [build, unit-tests]
     runs-on: self-hosted
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
     steps:
-      - name: Deploy from Docker Hub to VM1
+      - name: Deploy to VM1
         env:
           SSHPASS: ${{ secrets.SSHPASSWORD }}
           SSHHOST: ${{ secrets.SSHHOST }}
+          DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
         run: |
-          echo "Deploying new Docker image to VM1..."
+          echo "Deploying to production..."
           sshpass -p "$SSHPASS" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSHHOST "
-            cd ~/app &&
-            docker pull ${{ secrets.DOCKER_USERNAME }}/todolist:latest &&
+            cd ~/app
+            docker system prune -a -f  # Очистка кэша
+            docker pull $DOCKER_USER/todolist:latest
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
           "
