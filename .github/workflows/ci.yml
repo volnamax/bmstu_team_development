@@ -2,16 +2,21 @@ name: Go CI/CD Pipeline
 
 on:
   push:
-    branches: [ "**" ]  # Авто на любой пуш
+    branches: [ "**" ]  # На все ветки
   pull_request:
-    branches: [ "main", "develop" ]  # Авто на PR в main и develop
+    branches: [ "main", "develop" ]
 
 jobs:
   build:
-    runs-on: self-hosted  # Как на vm2
+    runs-on: self-hosted  # Без container!
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'  # Ставим Go локально!
 
       - name: Build Go binary
         run: |
@@ -35,6 +40,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
