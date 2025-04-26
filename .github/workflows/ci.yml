@@ -73,6 +73,7 @@ jobs:
           SSH_HOST: ${{ secrets.SSHHOST }}
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSH_HOST "mkdir -p ~/app/db_init"
-          sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -r release/* .env db_init/* gitlab-runner@$SSH_HOST:~/app/
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSH_HOST "cd ~/app && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
+          echo "$ENV_FILE" > .env
+          sshpass -p ${{ secrets.SSHPASSWORD }} ssh -o StrictHostKeyChecking=no gitlab-runner${{ secrets.SSHHOST }} "mkdir -p ~/app/db_init"
+          sshpass -p ${{ secrets.SSHPASSWORD }} scp -o StrictHostKeyChecking=no -r release/* .env db_init/* gitlab-runner@${{ secrets.SSHHOST }}:~/app/
+          sshpass -p ${{ secrets.SSHPASSWORD }} ssh -o StrictHostKeyChecking=no gitlab-runner@${{ secrets.SSHHOST }} "cd ~/app && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
