@@ -16,11 +16,25 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
     - name: Setup .env
       run: echo "${{ secrets.ENV_FILE }}" > .env
-    - name: Deploy using docker-compose
+    - name: Deploy to VM1
+    env:
+      SSHPASSWORD: ${{ secrets.SSHPASSWORD }}
+      SSH_HOST: ${{ secrets.SSHHOST }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       run: |
-        echo "Deploying from Docker Hub..."
+        echo "Deploying to production on VM1..."
         
-        docker pull volnamax1/todolist:latest
+        # Логинимся по SSH и выполняем команды на ВМ1
+        sshpass -p "$SSHPASSWORD" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSH_HOST "
+          docker login -u $DOCKERHUB_USERNAME -p ${{ secrets.DOCKERHUB_TOKEN }} &&
+          docker pull $DOCKERHUB_USERNAME/todolist:latest &&
+          cd ~/app &&
+          docker-compose -f docker-compose.yml -f docker-compose.prod.yml down -v &&
+          docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+        "
+    
+        echo "Deployment complete on VM1!"
+
         
         docker-compose -f docker-compose.yml -f docker-compose.prod.yml down -v
         docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
