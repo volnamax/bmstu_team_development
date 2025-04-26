@@ -53,10 +53,16 @@ jobs:
           SSHHOST: ${{ secrets.SSHHOST }}
           DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
         run: |
-          echo "Deploying to production..."
           sshpass -p "$SSHPASS" ssh -o StrictHostKeyChecking=no gitlab-runner@$SSHHOST "
-            cd ~/app
-            docker system prune -a -f  # Очистка кэша
+            echo '### Checking network...'
+            ping -c 4 registry-1.docker.io
+        
+            echo '### Logging in to Docker Hub...'
+            docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+        
+            echo '### Pulling image...'
             docker pull $DOCKER_USER/todolist:latest
+        
+            echo '### Starting containers...'
             docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
           "
