@@ -2,26 +2,27 @@ name: Go CI/CD Pipeline
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "**" ]  # Запуск для всех веток
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop" ]  # Запуск для PR в main/develop
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    container: golang:1.23.8-alpine
-    
+    runs-on: ubuntu-latest  # Используйте self-hosted runner с тегом "vm2"
+    container: golang:1.23.8-alpine  # Образ для сборки
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Build Go binary
       run: |
+        echo "Building Go binary..."
         go mod download
         CGO_ENABLED=0 GOOS=linux go build -o bin/main ./cmd/main.go
         mkdir -p release
         cp bin/main docker-compose.yml docker-compose.prod.yml Dockerfile release/
-    
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -31,53 +32,55 @@ jobs:
           db_init/
 
   test:
-    needs: build
+    needs: build  # Зависит от job "build"
     runs-on: ubuntu-latest
     container: golang:1.23.8-alpine
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Download artifacts
       uses: actions/download-artifact@v3
       with:
         name: app-artifacts
-    
+
     - name: Run tests
       run: |
+        echo "Running unit tests..."
         go test -v ./...
         go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
         golangci-lint run || true
 
   deploy:
-    needs: [build, test]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    needs: [build, test]  # Зависит от build и test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'  # Только для main/develop
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Download artifacts
       uses: actions/download-artifact@v3
       with:
         name: app-artifacts
-    
+
     - name: Setup SSH
       env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SSH_HOST: ${{ secrets.SSH_HOST }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSHPASSWORD }}  # Приватный ключ для доступа к ВМ1
+        SSH_HOST: ${{ secrets.SSH_HOST }}  # IP ВМ1
       run: |
         mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        echo "$SSHPASSWORD" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
-    
+        ssh-keyscan -H $SSHHOST >> ~/.ssh/known_hosts
+
     - name: Deploy to production
       env:
-        SSHPASSWORD: ${{ secrets.SSHPASSWORD }}
+        SSHPASSWORD: ${{ secrets.SSHPASSWORD }}  # Пароль пользователя gitlab-runner
       run: |
-        sshpass -p "$SSHPASSWORD" ssh gitlab-runner@${{ secrets.SSH_HOST }} "mkdir -p ~/app/db_init"
-        sshpass -p "$SSHPASSWORD" scp -r release/* .env db_init/* gitlab-runner@${{ secrets.SSH_HOST }}:~/app/
-        sshpass -p "$SSHPASSWORD" ssh gitlab-runner@${{ secrets.SSH_HOST }} "cd ~/app && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
+        echo "Deploying to production..."
+        sshpass -p "$SSHPASSWORD" ssh gitlab-runner@${{ secrets.SSHHOST }} "mkdir -p ~/app/db_init"
+        sshpass -p "$SSHPASSWORD" scp -r release/* .env db_init/* gitlab-runner@${{ secrets.SSHHOST }}:~/app/
+        sshpass -p "$SSHPASSWORD" ssh gitlab-runner@${{ secrets.SSHHOST }} "cd ~/app && docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d"
